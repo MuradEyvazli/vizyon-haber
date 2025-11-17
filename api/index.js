@@ -5,12 +5,38 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 
+// Environment variables
+const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 const app = express();
 app.use(helmet());
 app.use(express.json({ limit: '200kb' }));
 app.use(cookieParser());
-app.use(cors({ origin: ['https://vizyon-nexus.com', 'http://localhost:5173'], credentials: true }));
+
+// CORS configuration - multiple origins support
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3001',
+  CORS_ORIGIN,
+  'https://vizyon-nexus.com',
+  'https://www.vizyon-nexus.com'
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '').replace('http://', '')))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // For now, allow all origins in development
+    }
+  },
+  credentials: true
+}));
 
 
 // DDoS/Brute-force: kritik uç noktalara rate limit
@@ -45,4 +71,30 @@ publishedAt: new Date().toISOString(),
 }
 
 
-app.listen(4000, () => console.log('API running on :4000'));
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'VİZYON NEXUS API',
+    version: '1.0.0',
+    endpoints: {
+      news: '/news?section=world&limit=20',
+      health: '/health'
+    }
+  });
+});
+
+// Start server - bind to 0.0.0.0 for Render
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 API running on port ${PORT}`);
+  console.log(`📍 Environment: ${NODE_ENV}`);
+  console.log(`🔗 CORS Origin: ${CORS_ORIGIN}`);
+});

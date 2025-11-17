@@ -62,7 +62,7 @@ export default function TopBar() {
               className="flex items-center cursor-pointer"
             >
               <img
-                src="/src/assets/nexsus-logo.png"
+                src="/nexsus-logo.png"
                 alt="Vizyon Nexsus News"
                 className="h-[200px] mb-[-50px] mt-[-50px] md:mb-[-50px] md:mt-[-50px] md:h-[200px] w-auto"
               />

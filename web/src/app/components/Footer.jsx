@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <div className="mb-6">
               <img
-                src="/src/assets/nexsus-logo-black.png"
+                src="/nexsus-logo-black.png"
                 alt="Vizyon Nexsus News"
                 className="h-[200px] md:h-[200px] md:mb-[-50px] md:mt-[-50px] mb-[-50px] mt-[-50px] w-auto"
               />

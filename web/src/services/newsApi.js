@@ -18,9 +18,15 @@ const newsApiClient = axios.create({
  * @returns {Promise<Array>} Haber listesi
  */
 export const fetchRealNews = async (options = {}) => {
-  // API key yoksa direkt demo data dön
-  if (!NEWS_API_KEY || NEWS_API_KEY === 'demo') {
-    console.log('📰 Demo veriler kullanılıyor (API key yok)');
+  // Production'da veya API key yoksa direkt demo data dön
+  const isProduction = import.meta.env.PROD;
+
+  if (!NEWS_API_KEY || NEWS_API_KEY === 'demo' || isProduction) {
+    if (isProduction) {
+      console.log('📰 Demo veriler kullanılıyor (Production mode - NewsAPI ücretsiz planı production\'da çalışmaz)');
+    } else {
+      console.log('📰 Demo veriler kullanılıyor (API key yok)');
+    }
     return getDemoNews(options);
   }
 

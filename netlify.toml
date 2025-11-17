@@ -1,0 +1,99 @@
+# Netlify Configuration File
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Base directory for the build
+  base = "web"
+
+  # Build command
+  command = "npm run build"
+
+  # Publish directory (build output)
+  publish = "dist"
+
+# Production context
+[context.production]
+  command = "npm run build"
+
+# Deploy Preview context
+[context.deploy-preview]
+  command = "npm run build"
+
+# Branch Deploy context
+[context.branch-deploy]
+  command = "npm run build"
+
+# Redirects and rewrites
+[[redirects]]
+  # SPA fallback - all routes go to index.html
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+    # Cache control for HTML
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    # Cache static assets for 1 year
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    # Cache JS files for 1 year
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    # Cache CSS files for 1 year
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    # Cache manifest for 1 week
+    Cache-Control = "public, max-age=604800"
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    # Cache images for 1 month
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    # Cache images for 1 month
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    # Cache SVG for 1 month
+    Cache-Control = "public, max-age=2592000"
+
+# Environment variables (set these in Netlify Dashboard)
+# VITE_API_BASE_URL = "https://your-api-url.com"
+
+# Functions (if using Netlify Functions in the future)
+[functions]
+  directory = "netlify/functions"
+
+# Build image (Ubuntu Focal 20.04)
+[build.environment]
+  NODE_VERSION = "18"

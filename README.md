@@ -25,6 +25,22 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 
 ## ✨ Öne Çıkan Özellikler
 
+### 🔍 Akıllı Arama Sistemi
+- **Instant Search**: Yazdıkça gerçek zamanlı sonuçlar
+- **Fuzzy Search**: Yazım hatalarına toleranslı arama
+- **Türkçe Karakter Desteği**: ç, ğ, ı, ö, ş, ü normalizasyonu
+- **Çoklu Alan Arama**: Başlık, özet, içerik, kategori, yazar, kaynak
+- **Highlight**: Eşleşen kelimelerin sarı ile vurgulanması
+- **Debounce Optimizasyonu**: 300ms gecikme ile performans
+- **Rich Results**: Haber görseli preview ve kategori badge'leri
+
+### 📰 Gerçek Haber Entegrasyonu
+- **NewsAPI Entegrasyonu**: Türk haber sitelerinden canlı haberler
+- **8 Türk Kaynak**: sabah.com.tr, hurriyet.com.tr, milliyet.com.tr, sozcu.com.tr, haberturk.com, ntv.com.tr, cnnturk.com, trthaber.com
+- **Pagination**: Her sayfada 20 haber, sınırsız yükleme
+- **Backend Proxy**: CORS sorunu çözümü ile güvenli API çağrıları
+- **Fallback System**: API hatalarında demo data desteği
+
 ### 📱 Mobil-First Tasarım
 - %70+ mobil trafik için optimize edilmiş UX/UI
 - Touch-friendly minimum 48px dokunma alanları
@@ -36,11 +52,12 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 - Asimetrik grid düzeni (hero card + standard cards)
 - Renkli kategori badge sistemi
 - Smooth animations ve transitions (Framer Motion)
+- Breaking news ticker (Son dakika haberleri)
 
 ### 🔒 Güvenlik Öncelikleri
 - **XSS Protection**: DOMPurify ile HTML sanitization
 - **CSP Headers**: Content Security Policy
-- **Rate Limiting**: API isteklerinde hız sınırlama
+- **Rate Limiting**: API isteklerinde hız sınırlama (100 req/min)
 - **CSRF Token**: Cross-site request forgery koruması
 - **Helmet.js**: HTTP header güvenlik katmanı
 
@@ -49,6 +66,7 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 - Lazy loading görseller
 - Optimized bundle size
 - CDN-ready architecture
+- LocalStorage caching
 
 ---
 
@@ -70,11 +88,18 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 | Teknoloji | Versiyon | Kullanım Amacı |
 |-----------|----------|----------------|
 | **Express.js** | 4.21.1 | REST API Framework |
+| **Axios** | 1.13.2 | NewsAPI client |
 | **Helmet** | 7.1.0 | Security headers |
 | **CORS** | 2.8.5 | Cross-origin requests |
 | **Express Rate Limit** | 7.4.0 | Rate limiting |
 | **JWT** | 9.0.2 | Authentication |
 | **Morgan** | 1.10.0 | Request logging |
+
+### Dış Servisler
+| Servis | Kullanım Amacı |
+|--------|----------------|
+| **NewsAPI** | Türk haber sitelerinden gerçek haberler |
+| **Unsplash** | Placeholder görseller (demo) |
 
 ---
 
@@ -104,11 +129,23 @@ cd web
 npm install
 
 # .env.local dosyası oluşturun
-echo "VITE_API_BASE_URL=http://localhost:3001" > .env.local
+cat > .env.local << EOF
+VITE_API_BASE_URL=http://localhost:3001
+VITE_NEWS_API_KEY=your_newsapi_key_here
+EOF
 
 npm run dev
 ```
 Frontend: **http://localhost:5173**
+
+### 4. NewsAPI Key (Opsiyonel)
+Gerçek haberler için [NewsAPI](https://newsapi.org/) key alın:
+1. https://newsapi.org/register adresine gidin
+2. Ücretsiz API key alın
+3. `.env.local` dosyasına ekleyin: `VITE_NEWS_API_KEY=your_key`
+4. Backend `.env` dosyasına da ekleyin: `NEWS_API_KEY=your_key`
+
+**Not**: API key olmadan demo haberler gösterilir.
 
 ### 4. Tarayıcıda Açın
 ```
@@ -185,6 +222,7 @@ Publish directory: web/dist
 4. **Environment Variables**
 ```
 VITE_API_BASE_URL=https://your-api-url.com
+VITE_NEWS_API_KEY=your_newsapi_key_here
 ```
 
 5. **Deploy!** Netlify otomatik olarak build edip deploy edecektir.
@@ -214,6 +252,8 @@ Start Command: npm start
 NODE_ENV=production
 PORT=3001
 JWT_SECRET=your-secret-key
+NEWS_API_KEY=your_newsapi_key_here
+CORS_ORIGIN=https://your-frontend-url.netlify.app
 ```
 
 #### Railway.app
@@ -275,23 +315,31 @@ railway up
 - [x] Mobil-first UI/UX
 - [x] Haber grid sistemi
 - [x] Güvenlik altyapısı
-- [x] Demo veri entegrasyonu
 - [x] REST API temel yapısı
+- [x] **NewsAPI Entegrasyonu** (Türk haber siteleri)
+- [x] **Akıllı Arama Sistemi** (Fuzzy search, Türkçe destek)
+- [x] **Pagination** (Sınırsız haber yükleme)
+- [x] **/trends sayfası** (Gerçek API verisi)
+- [x] **/video sayfası** (Gerçek API verisi)
+- [x] **Breaking News Ticker** (Son dakika haberleri)
+- [x] **SEO Optimizasyonu** (Meta tags, structured data)
 
 ### Phase 2: Backend Enhancement (Sırada)
 - [ ] Database entegrasyonu (PostgreSQL/MongoDB)
 - [ ] Admin panel
 - [ ] CMS integration
 - [ ] Image upload & optimization
+- [ ] Kategori bazlı haber çekme
+- [ ] Haber kaydetme/favorilere ekleme
 
 ### Phase 3: Advanced Features
 - [ ] User authentication & profiles
 - [ ] Comment system
 - [ ] Push notifications
 - [ ] Real-time updates (WebSocket)
-- [ ] Advanced search & filtering
 - [ ] Dark mode
-- [ ] Bookmark/save articles
+- [ ] Gelişmiş filtreleme (tarih, kaynak, kategori)
+- [ ] Haber önerileri (AI-powered)
 
 ### Phase 4: Expansion
 - [ ] 10 tematik site türetimi

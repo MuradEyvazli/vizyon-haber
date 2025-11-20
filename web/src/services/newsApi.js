@@ -1,15 +1,12 @@
 import axios from 'axios';
 
-const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY || 'demo';
-const NEWS_API_URL = import.meta.env.VITE_NEWS_API_URL || 'https://newsapi.org/v2';
+// Kendi backend'imizi kullan (NewsAPI proxy)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
-// NewsAPI.org client
-const newsApiClient = axios.create({
-  baseURL: NEWS_API_URL,
-  timeout: 10000,
-  params: {
-    apiKey: NEWS_API_KEY,
-  },
+// Backend client
+const backendClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 15000,
 });
 
 /**
@@ -18,112 +15,42 @@ const newsApiClient = axios.create({
  * @returns {Promise<Array>} Haber listesi
  */
 export const fetchRealNews = async (options = {}) => {
-  // Production'da veya API key yoksa direkt demo data dön
-  const isProduction = import.meta.env.PROD;
-
-  if (!NEWS_API_KEY || NEWS_API_KEY === 'demo' || isProduction) {
-    if (isProduction) {
-      console.log('📰 Demo veriler kullanılıyor (Production mode - NewsAPI ücretsiz planı production\'da çalışmaz)');
-    } else {
-      console.log('📰 Demo veriler kullanılıyor (API key yok)');
-    }
-    return getDemoNews(options);
-  }
-
   try {
     const {
       category = '',
-      country = 'tr',
       query = '',
       pageSize = 20,
       page = 1,
     } = options;
 
-    // NewsAPI ücretsiz plan: /top-headlines sadece us, gb, de, fr gibi ülkeleri destekler
-    // Türkiye için /everything endpoint'ini kullanıyoruz
-    let endpoint = '/everything';
-    let params = {
-      q: query || 'Türkiye OR Turkey OR Turkish OR Ankara OR Istanbul',
-      language: 'tr',
-      sortBy: 'publishedAt',
-      pageSize,
-      page,
-    };
+    console.log('📡 Backend API çağrısı yapılıyor...');
 
-    // Kategori varsa, query'e ekle
-    if (category) {
-      const categoryMap = {
-        'teknoloji': 'technology OR teknoloji',
-        'technology': 'technology OR teknoloji',
-        'spor': 'sports OR spor',
-        'ekonomi': 'economy OR ekonomi OR business',
-        'sağlık': 'health OR sağlık',
-        'bilim': 'science OR bilim',
-      };
-      params.q = categoryMap[category.toLowerCase()] || category;
+    // Kendi backend'imize istek at
+    const response = await backendClient.get('/api/news', {
+      params: {
+        category,
+        query,
+        pageSize,
+        page,
+      },
+    });
+
+    if (response.data.articles && response.data.articles.length > 0) {
+      console.log('✅ Backend API başarılı:', response.data.articles.length, 'haber');
+
+      // Backend'den gelen veriyi kullan
+      return response.data.articles;
     }
 
-    console.log('📡 NewsAPI çağrısı yapılıyor:', endpoint, params);
-    const response = await newsApiClient.get(endpoint, { params });
+    // Eğer backend'den veri gelmezse demo data dön
+    console.log('⚠️ Backend\'den veri gelmedi, demo veriler kullanılıyor');
+    return getDemoNews(options);
 
-    if (response.data.status === 'ok') {
-      console.log('✅ NewsAPI başarılı:', response.data.articles.length, 'haber');
-
-      // Eğer hala 0 haber geliyorsa, global haberler çek
-      if (response.data.articles.length === 0) {
-        console.log('⚠️ Türkiye haberi bulunamadı, global haberler çekiliyor...');
-        const globalResponse = await newsApiClient.get('/top-headlines', {
-          params: {
-            country: 'us',
-            pageSize,
-            page,
-          }
-        });
-
-        if (globalResponse.data.articles.length > 0) {
-          console.log('✅ Global haberler:', globalResponse.data.articles.length);
-          const articles = globalResponse.data.articles.map((article, index) => ({
-            id: `${Date.now()}-${index}`,
-            title: article.title,
-            summary: article.description || article.content?.substring(0, 200) || 'Detaylar için haberi okuyun.',
-            content: article.content,
-            category: category || 'Genel',
-            slug: createSlug(article.title),
-            image: article.urlToImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
-            publishedAt: article.publishedAt,
-            source: article.source?.name || 'Bilinmeyen Kaynak',
-            url: article.url,
-            author: article.author,
-          }));
-          return articles;
-        }
-      }
-
-      // NewsAPI formatını kendi formatımıza dönüştür
-      const articles = response.data.articles.map((article, index) => ({
-        id: `${Date.now()}-${index}`,
-        title: article.title,
-        summary: article.description || article.content?.substring(0, 200) || 'Detaylar için haberi okuyun.',
-        content: article.content,
-        category: category || 'Genel',
-        slug: createSlug(article.title),
-        image: article.urlToImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
-        publishedAt: article.publishedAt,
-        source: article.source?.name || 'Bilinmeyen Kaynak',
-        url: article.url,
-        author: article.author,
-      }));
-
-      return articles;
-    }
-
-    throw new Error('NewsAPI hatası');
   } catch (error) {
-    console.error('❌ NewsAPI fetch error:', error.message);
-    console.error('Hata detayı:', error.response?.data || error);
+    console.error('❌ Backend API fetch error:', error.message);
 
-    // Fallback: API çalışmazsa demo veriler dön
-    console.log('⚠️ API hatası, demo veriler kullanılıyor');
+    // Backend'e ulaşılamazsa demo veriler dön
+    console.log('⚠️ Backend API hatası, demo veriler kullanılıyor');
     return getDemoNews(options);
   }
 };
@@ -141,25 +68,6 @@ export const fetchNewsByCategory = async (category) => {
 export const searchNews = async (query) => {
   return fetchRealNews({ query, pageSize: 15 });
 };
-
-/**
- * Slug oluştur
- */
-function createSlug(title) {
-  const turkishMap = {
-    'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
-    'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u',
-  };
-
-  return title
-    .split('')
-    .map(char => turkishMap[char] || char)
-    .join('')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 100);
-}
 
 /**
  * Demo/Fallback haberler - API çalışmazsa

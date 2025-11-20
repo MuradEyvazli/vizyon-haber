@@ -17,7 +17,10 @@ import SEO, { StructuredData } from '../../components/SEO';
 export default function Home() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [location, setLocation] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     loadNews();
@@ -27,12 +30,15 @@ export default function Home() {
     try {
       setLoading(true);
 
-      // Genel haberler çek
+      // Genel haberler çek - İLK SAYFA
       const news = await fetchNews({
         pageSize: 20,
+        page: 1,
       });
 
       setItems(news);
+      setCurrentPage(1);
+      setHasMore(news.length >= 20);
 
       // localStorage'a kaydet (detay sayfası için)
       localStorage.setItem('allArticles', JSON.stringify(news));
@@ -42,11 +48,49 @@ export default function Home() {
         localStorage.setItem(`article-${article.slug}`, JSON.stringify(article));
       });
 
-      console.log('✅ Gerçek haberler yüklendi:', news.length);
+      console.log('✅ Haberler yüklendi:', news.length);
     } catch (error) {
       console.error('Haber yükleme hatası:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Daha fazla haber yükle - PAGINATION
+  const loadMoreNews = async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+
+      // SONRAKİ SAYFAYI ÇEK
+      const moreNews = await fetchNews({
+        pageSize: 20,
+        page: nextPage,
+      });
+
+      if (moreNews.length > 0) {
+        const newItems = [...items, ...moreNews];
+        setItems(newItems);
+        setCurrentPage(nextPage);
+        setHasMore(moreNews.length >= 20);
+
+        // localStorage güncelle
+        localStorage.setItem('allArticles', JSON.stringify(newItems));
+        moreNews.forEach(article => {
+          localStorage.setItem(`article-${article.slug}`, JSON.stringify(article));
+        });
+
+        console.log(`✅ Sayfa ${nextPage} yüklendi:`, moreNews.length, 'yeni haber');
+      } else {
+        setHasMore(false);
+        console.log('❌ Daha fazla haber yok');
+      }
+    } catch (error) {
+      console.error('Daha fazla haber yüklenemedi:', error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -66,7 +110,7 @@ export default function Home() {
     <main className="min-h-screen">
       {/* SEO Meta Tags */}
       <SEO
-        title="VİZYON NEXUS - Türkiye'nin Güvenilir Haber Portalı"
+        title="VİZYON HABER - Türkiye'nin Güvenilir Haber Portalı"
         description="Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberlerini takip edin. Türkiye'nin en güvenilir haber kaynağı."
         keywords="haber, son dakika, güncel haberler, Türkiye haberleri, dünya haberleri, ekonomi haberleri, spor haberleri, teknoloji"
         image="/nexsus-logo.png"
@@ -128,6 +172,96 @@ export default function Home() {
           title="Dünya Haberleri"
           gradient="gradient-ocean"
         />
+      )}
+
+      {/* Daha Çok Haber Yükle Butonu */}
+      {hasMore && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="container py-16"
+        >
+          <div className="flex justify-center">
+            <motion.button
+              onClick={loadMoreNews}
+              disabled={loadingMore}
+              whileHover={{ scale: loadingMore ? 1 : 1.05 }}
+              whileTap={{ scale: loadingMore ? 1 : 0.95 }}
+              className="group relative px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+            >
+              {/* Animasyonlu Arkaplan */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600"
+                animate={{
+                  x: loadingMore ? ['-100%', '100%'] : 0,
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: loadingMore ? Infinity : 0,
+                  ease: "linear",
+                }}
+              />
+
+              {/* İçerik */}
+              <span className="relative flex items-center gap-4">
+                {loadingMore ? (
+                  <>
+                    <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    Haberler Yükleniyor...
+                  </>
+                ) : (
+                  <>
+                    Daha Çok Haber Yükle
+                    <svg
+                      className="w-6 h-6 group-hover:translate-y-1 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </>
+                )}
+              </span>
+            </motion.button>
+          </div>
+
+          {/* Bilgi Text */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-center mt-6 text-gray-400"
+          >
+            Sayfa {currentPage} • {items.length} haber yüklendi
+          </motion.p>
+        </motion.div>
+      )}
+
+      {/* Tüm Haberler Yüklendi Mesajı */}
+      {!hasMore && items.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="container py-16"
+        >
+          <div className="text-center">
+            <div className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-2xl">
+              <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+              </svg>
+              <span className="text-white font-semibold text-lg">
+                Tüm Haberler Yüklendi ({items.length} haber)
+              </span>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Video Haberler - Clean & Simple */}

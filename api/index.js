@@ -55,8 +55,9 @@ app.use('/api/news', apiLimiter);
 // ========================================
 app.get('/api/news', async (req, res) => {
   try {
-    const { pageSize = 10 } = req.query;
+    const { pageSize = 10, page = 1 } = req.query;
     const limit = Math.min(parseInt(pageSize), 20);
+    const pageNum = parseInt(page);
 
     // API Key - önce header'dan, yoksa environment'tan al
     const apiKey = req.headers['x-news-api-key'] || NEWS_API_KEY;
@@ -72,16 +73,17 @@ app.get('/api/news', async (req, res) => {
       });
     }
 
-    console.log('📡 NewsAPI çağrısı yapılıyor... (key:', apiKey.substring(0, 10) + '...)');
+    console.log(`📡 NewsAPI çağrısı yapılıyor... (sayfa: ${pageNum}, key: ${apiKey.substring(0, 10)}...)`);
 
-    // Türkiye haberleri için /everything endpoint kullan (ücretsiz planda tr desteklenmiyor)
+    // Türkiye haberleri - Türkçe kaynaklar
     const response = await axios.get('https://newsapi.org/v2/everything', {
       params: {
         apiKey: apiKey,
-        q: 'Turkey OR Türkiye OR Turkish', // Türkiye ile ilgili haberler
-        language: 'en', // İngilizce haberler (daha fazla sonuç)
+        // Türk haber sitelerinden aramak için domains kullan
+        domains: 'sabah.com.tr,hurriyet.com.tr,milliyet.com.tr,sozcu.com.tr,haberturk.com,ntv.com.tr,cnnturk.com,trthaber.com',
         sortBy: 'publishedAt',
         pageSize: limit,
+        page: pageNum,
       },
       timeout: 10000,
     });

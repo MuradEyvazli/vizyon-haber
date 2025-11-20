@@ -25,17 +25,17 @@ const client = axios.create({
 
 /**
  * Haberleri getir
- * @param {Object} options - { pageSize: 10 }
+ * @param {Object} options - { pageSize: 10, page: 1 }
  * @returns {Promise<Array>} Haber listesi
  */
 export async function fetchNews(options = {}) {
   try {
-    const { pageSize = 20 } = options;
+    const { pageSize = 20, page = 1 } = options;
 
-    console.log('📡 Backend\'den haberler çekiliyor...');
+    console.log(`📡 Backend'den haberler çekiliyor... (Sayfa: ${page})`);
 
     const response = await client.get('/api/news', {
-      params: { pageSize }
+      params: { pageSize, page }
     });
 
     const { articles, source } = response.data;

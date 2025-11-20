@@ -10,7 +10,9 @@ import axios from 'axios';
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
-const NEWS_API_KEY = process.env.NEWS_API_KEY || '5056321a8bda4888aabbc60743ea46a68';
+
+// GNews API (ücretsiz, günlük 100 istek, production'da çalışır)
+const GNEWS_API_KEY = process.env.GNEWS_API_KEY || 'f87177a3c07b5f4ad87e5413fb81a70f';
 
 const app = express();
 app.use(helmet());
@@ -73,64 +75,87 @@ publishedAt: new Date().toISOString(),
 }
 
 
-// NewsAPI Proxy - Gerçek haberler için
+// GNews API Proxy - Gerçek haberler için
 app.get('/api/news', async (req, res) => {
   try {
     const { category, query, pageSize = 20, page = 1 } = req.query;
 
-    let apiQuery = query || 'Türkiye OR Turkey OR Turkish OR Ankara OR Istanbul';
+    // GNews için query parametresi
+    let searchQuery = query || 'Türkiye';
 
-    // Kategori varsa query'e ekle
-    if (category) {
-      const categoryMap = {
-        'teknoloji': 'technology OR teknoloji',
-        'technology': 'technology OR teknoloji',
-        'spor': 'sports OR spor',
-        'ekonomi': 'economy OR ekonomi OR business',
-        'sağlık': 'health OR sağlık',
-        'bilim': 'science OR bilim',
-      };
-      apiQuery = categoryMap[category.toLowerCase()] || category;
+    // Kategori mapping (GNews kategorileri)
+    const categoryMap = {
+      'teknoloji': 'technology',
+      'technology': 'technology',
+      'spor': 'sports',
+      'sports': 'sports',
+      'ekonomi': 'business',
+      'business': 'business',
+      'sağlık': 'health',
+      'health': 'health',
+      'bilim': 'science',
+      'science': 'science',
+      'eğlence': 'entertainment',
+      'entertainment': 'entertainment',
+      'genel': 'general',
+      'general': 'general',
+    };
+
+    const gnewsCategory = category ? categoryMap[category.toLowerCase()] : null;
+
+    console.log('📡 GNews API çağrısı:', { query: searchQuery, category: gnewsCategory });
+
+    // GNews API çağrısı
+    const gnewsParams = {
+      apikey: GNEWS_API_KEY,
+      lang: 'tr',
+      max: Math.min(parseInt(pageSize), 10), // GNews ücretsiz plan max 10
+      q: searchQuery,
+    };
+
+    // Kategori varsa ekle
+    if (gnewsCategory) {
+      gnewsParams.category = gnewsCategory;
+      delete gnewsParams.q; // Kategori ile birlikte q kullanılamaz
     }
 
-    console.log('📡 NewsAPI proxy çağrısı:', apiQuery);
-
-    const response = await axios.get('https://newsapi.org/v2/everything', {
-      params: {
-        apiKey: NEWS_API_KEY,
-        q: apiQuery,
-        language: 'tr',
-        sortBy: 'publishedAt',
-        pageSize,
-        page,
-      },
+    const response = await axios.get('https://gnews.io/api/v4/search', {
+      params: gnewsParams,
       timeout: 10000,
     });
 
-    if (response.data.status === 'ok') {
-      console.log('✅ NewsAPI başarılı:', response.data.articles.length, 'haber');
+    if (response.data.articles && response.data.articles.length > 0) {
+      console.log('✅ GNews API başarılı:', response.data.articles.length, 'GERÇEK HABER');
 
-      // Veriyi dönüştür
+      // Veriyi frontend formatına dönüştür
       const articles = response.data.articles.map((article, index) => ({
-        id: `${Date.now()}-${index}`,
+        id: `gnews-${Date.now()}-${index}`,
         title: article.title,
         summary: article.description || article.content?.substring(0, 200) || 'Detaylar için haberi okuyun.',
-        content: article.content,
+        content: article.content || article.description,
         category: category || 'Genel',
         slug: createSlug(article.title),
-        image: article.urlToImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
+        image: article.image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
         publishedAt: article.publishedAt,
         source: article.source?.name || 'Bilinmeyen Kaynak',
         url: article.url,
-        author: article.author,
+        author: 'GNews',
       }));
 
-      return res.json({ articles, total: response.data.totalResults });
+      return res.json({
+        articles,
+        total: response.data.totalArticles || articles.length,
+        source: 'gnews',
+        message: 'Gerçek haberler - GNews API'
+      });
     }
 
-    throw new Error('NewsAPI hatası');
+    // Haber bulunamadıysa fallback
+    console.log('⚠️ GNews\'den haber gelmedi, demo veriler kullanılıyor');
+    throw new Error('GNews API\'den veri gelmedi');
+
   } catch (error) {
-    console.error('❌ NewsAPI proxy error:', error.message);
+    console.error('❌ GNews API error:', error.response?.data?.errors || error.message);
 
     // Hata durumunda demo data dön
     const demoArticles = getDemoNews(parseInt(req.query.pageSize) || 20);
@@ -138,7 +163,7 @@ app.get('/api/news', async (req, res) => {
       articles: demoArticles,
       total: demoArticles.length,
       source: 'demo',
-      message: 'API hatası, demo veriler kullanılıyor'
+      message: 'API hatası, demo veriler kullanılıyor: ' + (error.response?.data?.errors?.[0] || error.message)
     });
   }
 });

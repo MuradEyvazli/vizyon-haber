@@ -68,7 +68,7 @@ export default function Trends() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 pb-24 lg:pb-0">
       {/* Header */}
-      <div className="bg-gradient-to-r bg-gradient-to-r from-red-600 via-gray-800 to-gray-900 text-white py-8">
+      <div className="bg-gradient-to-r from-red-600 via-gray-800 to-gray-900 text-white py-8">
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

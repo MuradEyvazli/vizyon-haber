@@ -181,7 +181,7 @@ async function fetchFromNewsData(pageSize, page) {
       country: 'tr',
       language: 'tr',
       size: pageSize,
-      page: page,
+      // NewsData.io doesn't support page param - uses nextPage token instead
     },
     timeout: 10000,
   });
@@ -293,6 +293,17 @@ function getDemoNews(count = 10) {
 // ========================================
 // SMART NEWS FETCHER - HİBRİT SİSTEM
 // ========================================
+
+// Shuffle fonksiyonu - haberleri karıştır (Fisher-Yates algoritması)
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 async function fetchNewsHybrid(pageSize, page) {
   // Cache key
   const cacheKey = `news-${pageSize}-${page}`;
@@ -308,46 +319,64 @@ async function fetchNewsHybrid(pageSize, page) {
     };
   }
 
-  // 2. API'leri sırayla dene (Currents -> NewsData -> NewsAPI)
-  const apis = [
-    { name: 'Currents API', fetch: fetchFromCurrents, priority: 1 },
-    { name: 'NewsData.io', fetch: fetchFromNewsData, priority: 2 },
-    { name: 'NewsAPI', fetch: fetchFromNewsAPI, priority: 3 },
+  // 2. TÜM API'leri PARALEL çağır - maksimum haber için!
+  console.log('🚀 3 API paralel çağrılıyor... (Maksimum haber modu)');
+
+  const apiCalls = [
+    fetchFromCurrents(pageSize, page).catch(err => {
+      console.error('❌ Currents API HATA:', err.message);
+      return [];
+    }),
+    fetchFromNewsData(pageSize, page).catch(err => {
+      console.error('❌ NewsData API HATA:', err.message);
+      return [];
+    }),
+    fetchFromNewsAPI(pageSize, page).catch(err => {
+      console.error('❌ NewsAPI HATA:', err.message);
+      return [];
+    })
   ];
 
-  let lastError = null;
+  const results = await Promise.all(apiCalls);
 
-  for (const api of apis) {
-    try {
-      const articles = await api.fetch(pageSize, page);
+  // 3. Tüm sonuçları birleştir
+  const allArticles = results.flat().filter(article => article);
 
-      if (articles && articles.length > 0) {
-        // Cache'e kaydet
-        cache.set(cacheKey, articles);
+  console.log(`📊 API Sonuçları:`);
+  console.log(`   Currents: ${results[0].length} haber`);
+  console.log(`   NewsData: ${results[1].length} haber`);
+  console.log(`   NewsAPI: ${results[2].length} haber`);
+  console.log(`   TOPLAM: ${allArticles.length} gerçek haber! 🎉`);
 
-        console.log(`✅ ${api.name} BAŞARILI: ${articles.length} haber`);
-
-        return {
-          articles,
-          source: api.name,
-          cached: false
-        };
-      }
-    } catch (error) {
-      console.error(`❌ ${api.name} HATA:`, error.message);
-      lastError = error;
-      // Bir sonraki API'yi dene
-      continue;
-    }
+  // 4. Hiç haber yoksa demo data
+  if (allArticles.length === 0) {
+    console.warn('⚠️ Hiçbir API\'den haber alınamadı - Demo data kullanılıyor');
+    return {
+      articles: getDemoNews(pageSize),
+      source: 'demo',
+      cached: false,
+      error: 'Tüm API\'ler başarısız'
+    };
   }
 
-  // 3. Hiçbir API çalışmadıysa demo data
-  console.warn('⚠️ Tüm API\'ler başarısız - Demo data kullanılıyor');
+  // 5. Haberleri karıştır - 3 API'den gelen haberler karışık gösterilsin
+  const shuffled = shuffleArray(allArticles);
+
+  // 6. Cache'e kaydet
+  cache.set(cacheKey, shuffled);
+
+  console.log(`✅ ${shuffled.length} haber karıştırılıp cache'e kaydedildi`);
+
   return {
-    articles: getDemoNews(pageSize),
-    source: 'demo',
+    articles: shuffled,
+    source: 'Hybrid (3 API Paralel)',
     cached: false,
-    error: lastError?.message
+    stats: {
+      currents: results[0].length,
+      newsdata: results[1].length,
+      newsapi: results[2].length,
+      total: allArticles.length
+    }
   };
 }
 

@@ -11,7 +11,7 @@ import DailyRecipe from '../components/DailyRecipe';
 import NewsSlider from '../components/NewsSlider';
 import AsymmetricNewsGrid from '../components/AsymmetricNewsGrid';
 import Footer from '../components/Footer';
-import { fetchRealNews, fetchNewsByCategory } from '../../services/newsApi';
+import { fetchNews, fetchNewsByCategory } from '../../services/newsApi';
 
 export default function Home() {
   const [items, setItems] = useState([]);
@@ -26,9 +26,8 @@ export default function Home() {
     try {
       setLoading(true);
 
-      // Genel haberler çek (Türkiye'den)
-      const news = await fetchRealNews({
-        country: 'tr',
+      // Genel haberler çek
+      const news = await fetchNews({
         pageSize: 20,
       });
 

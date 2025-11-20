@@ -3,183 +3,142 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
-import { z } from 'zod';
 import axios from 'axios';
 
-// Environment variables
+// ========================================
+// ENVIRONMENT VARIABLES
+// ========================================
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const NEWS_API_KEY = process.env.NEWS_API_KEY || '';
 
-// GNews API (ücretsiz, günlük 100 istek, production'da çalışır)
-const GNEWS_API_KEY = process.env.GNEWS_API_KEY || 'f87177a3c07b5f4ad87e5413fb81a70f';
-
+// ========================================
+// EXPRESS SETUP
+// ========================================
 const app = express();
 app.use(helmet());
 app.use(express.json({ limit: '200kb' }));
 app.use(cookieParser());
 
-// CORS configuration - multiple origins support
+// CORS - multiple origins support
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
   CORS_ORIGIN,
   'https://vizyon-nexus.com',
-  'https://www.vizyon-nexus.com'
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-
     if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '').replace('http://', '')))) {
       callback(null, true);
     } else {
-      callback(null, true); // For now, allow all origins in development
+      callback(null, true);
     }
   },
   credentials: true
 }));
 
-
-// DDoS/Brute-force: kritik uç noktalara rate limit
-const apiLimiter = rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false });
-app.use('/news', apiLimiter);
-
-
-// Basit doğrulama
-const newsQuerySchema = z.object({ section: z.string().optional(), limit: z.string().regex(/^\d+$/).default('20') });
-
-
-app.get('/news', (req, res) => {
-const parse = newsQuerySchema.safeParse(req.query);
-if (!parse.success) return res.status(400).json({ error: 'Bad query' });
-const { section, limit } = parse.data;
-// TODO: DB/Feed okuma + sanitize + cache (Redis önerilir)
-const items = mockNews(parseInt(limit), section);
-res.json({ items });
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false
 });
+app.use('/api/news', apiLimiter);
 
-
-function mockNews(n = 20, section = 'world') {
-return Array.from({ length: n }).map((_, i) => ({
-id: `${section}-${i}`,
-slug: `${section}-haber-${i}`,
-title: `Başlık ${i} — ${section}`,
-summary: `Kısa <strong>özet</strong> ${i}`,
-image: `https://picsum.photos/seed/${section}-${i}/800/450.webp`,
-category: section,
-publishedAt: new Date().toISOString(),
-}));
-}
-
-
-// GNews API Proxy - Gerçek haberler için
+// ========================================
+// NEWS API ENDPOINT - CLEAN & SIMPLE
+// ========================================
 app.get('/api/news', async (req, res) => {
   try {
-    const { category, query, pageSize = 20, page = 1 } = req.query;
+    const { pageSize = 10 } = req.query;
+    const limit = Math.min(parseInt(pageSize), 20);
 
-    // GNews için query parametresi
-    let searchQuery = query || 'Türkiye';
-
-    // Kategori mapping (GNews kategorileri)
-    const categoryMap = {
-      'teknoloji': 'technology',
-      'technology': 'technology',
-      'spor': 'sports',
-      'sports': 'sports',
-      'ekonomi': 'business',
-      'business': 'business',
-      'sağlık': 'health',
-      'health': 'health',
-      'bilim': 'science',
-      'science': 'science',
-      'eğlence': 'entertainment',
-      'entertainment': 'entertainment',
-      'genel': 'general',
-      'general': 'general',
-    };
-
-    const gnewsCategory = category ? categoryMap[category.toLowerCase()] : null;
-
-    console.log('📡 GNews API çağrısı:', { query: searchQuery, category: gnewsCategory });
-
-    // GNews API çağrısı
-    const gnewsParams = {
-      apikey: GNEWS_API_KEY,
-      lang: 'tr',
-      max: Math.min(parseInt(pageSize), 10), // GNews ücretsiz plan max 10
-      q: searchQuery,
-    };
-
-    // Kategori varsa ekle
-    if (gnewsCategory) {
-      gnewsParams.category = gnewsCategory;
-      delete gnewsParams.q; // Kategori ile birlikte q kullanılamaz
-    }
-
-    const response = await axios.get('https://gnews.io/api/v4/search', {
-      params: gnewsParams,
-      timeout: 10000,
-    });
-
-    if (response.data.articles && response.data.articles.length > 0) {
-      console.log('✅ GNews API başarılı:', response.data.articles.length, 'GERÇEK HABER');
-
-      // Veriyi frontend formatına dönüştür
-      const articles = response.data.articles.map((article, index) => ({
-        id: `gnews-${Date.now()}-${index}`,
-        title: article.title,
-        summary: article.description || article.content?.substring(0, 200) || 'Detaylar için haberi okuyun.',
-        content: article.content || article.description,
-        category: category || 'Genel',
-        slug: createSlug(article.title),
-        image: article.image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
-        publishedAt: article.publishedAt,
-        source: article.source?.name || 'Bilinmeyen Kaynak',
-        url: article.url,
-        author: 'GNews',
-      }));
-
+    // API Key kontrolü
+    if (!NEWS_API_KEY || NEWS_API_KEY === 'demo') {
+      console.log('⚠️ NEWS_API_KEY yok, demo data kullanılıyor');
       return res.json({
-        articles,
-        total: response.data.totalArticles || articles.length,
-        source: 'gnews',
-        message: 'Gerçek haberler - GNews API'
+        success: true,
+        source: 'demo',
+        articles: getDemoNews(limit),
+        message: 'Demo veriler - NEWS_API_KEY environment variable ekleyin'
       });
     }
 
-    // Haber bulunamadıysa fallback
-    console.log('⚠️ GNews\'den haber gelmedi, demo veriler kullanılıyor');
-    throw new Error('GNews API\'den veri gelmedi');
+    console.log('📡 NewsAPI çağrısı yapılıyor...');
+
+    // NewsAPI.org'a istek (backend'den, CORS yok!)
+    const response = await axios.get('https://newsapi.org/v2/top-headlines', {
+      params: {
+        apiKey: NEWS_API_KEY,
+        country: 'tr',
+        pageSize: limit,
+      },
+      timeout: 10000,
+    });
+
+    // Başarılı yanıt
+    if (response.data.status === 'ok' && response.data.articles.length > 0) {
+      console.log('✅ NewsAPI BAŞARILI:', response.data.articles.length, 'GERÇEK HABER');
+
+      const articles = response.data.articles.map((article, index) => ({
+        id: `news-${Date.now()}-${index}`,
+        title: article.title,
+        summary: article.description || 'Haber detayları için tıklayın.',
+        content: article.content || article.description,
+        category: 'Gündem',
+        slug: slugify(article.title),
+        image: article.urlToImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800',
+        publishedAt: article.publishedAt,
+        source: article.source?.name || 'Haber Kaynağı',
+        url: article.url,
+        author: article.author || 'Yazar',
+      }));
+
+      return res.json({
+        success: true,
+        source: 'newsapi',
+        articles,
+        message: 'Gerçek haberler - NewsAPI'
+      });
+    }
+
+    // Haber bulunamadı
+    throw new Error('NewsAPI\'den haber gelmedi');
 
   } catch (error) {
-    console.error('❌ GNews API error:', error.response?.data?.errors || error.message);
+    console.error('❌ NewsAPI HATA:', error.response?.data || error.message);
 
-    // Hata durumunda demo data dön
-    const demoArticles = getDemoNews(parseInt(req.query.pageSize) || 20);
-    res.json({
-      articles: demoArticles,
-      total: demoArticles.length,
+    // Hata durumunda demo data
+    return res.json({
+      success: true,
       source: 'demo',
-      message: 'API hatası, demo veriler kullanılıyor: ' + (error.response?.data?.errors?.[0] || error.message)
+      articles: getDemoNews(parseInt(req.query.pageSize) || 10),
+      message: 'API hatası, demo veriler: ' + (error.response?.data?.message || error.message)
     });
   }
 });
 
-// Slug oluştur helper
-function createSlug(title) {
-  if (!title) return 'haber';
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
 
-  const turkishMap = {
+// Türkçe karakter desteği ile slug oluştur
+function slugify(text) {
+  if (!text) return 'haber';
+
+  const map = {
     'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
     'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u',
   };
 
-  return title
+  return text
     .split('')
-    .map(char => turkishMap[char] || char)
+    .map(char => map[char] || char)
     .join('')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -187,64 +146,88 @@ function createSlug(title) {
     .substring(0, 100);
 }
 
-// Demo haberler
-function getDemoNews(count = 20) {
-  const demoArticles = [
+// Demo haberler - fallback için
+function getDemoNews(count = 10) {
+  const demos = [
     {
-      id: 1,
-      title: "Türkiye'nin Yeni Dijital Dönüşüm Stratejisi Açıklandı",
-      summary: "Cumhurbaşkanlığı Dijital Dönüşüm Ofisi tarafından hazırlanan yeni strateji belgesi, ülkenin teknoloji altyapısını güçlendirecek kapsamlı adımları içeriyor.",
-      content: "Türkiye'nin dijital dönüşüm yol haritası bugün açıklandı...",
-      category: 'Teknoloji',
-      slug: 'turkiye-dijital-donusum-stratejisi',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop',
+      id: 'demo-1',
+      title: 'Türkiye Ekonomisinde Yeni Dönem Başlıyor',
+      summary: 'Ekonomi yönetimi yeni reform paketini açıkladı. Enflasyonla mücadele ve büyüme hedefleri belirlendi.',
+      content: 'Detaylı haber içeriği...',
+      category: 'Ekonomi',
+      slug: 'turkiye-ekonomi-reform',
+      image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
       publishedAt: new Date().toISOString(),
-      source: 'VİZYON NEXUS',
-      author: 'Demo',
+      source: 'DEMO',
       url: '#',
+      author: 'Demo Yazar',
     },
     {
-      id: 2,
-      title: 'Merkez Bankası Faiz Kararını Açıkladı',
-      summary: 'Merkez Bankası Para Politikası Kurulu toplantısında faiz oranlarını değiştirmeme kararı aldı.',
-      content: 'Merkez Bankası Para Politikası Kurulu (PPK), bugün gerçekleştirdiği toplantıda politika faizini değiştirmeme kararı aldı...',
-      category: 'Ekonomi',
-      slug: 'merkez-bankasi-faiz-karari',
-      image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=600&fit=crop',
+      id: 'demo-2',
+      title: 'Teknoloji Devlerinden Yapay Zeka Atılımı',
+      summary: 'Yeni nesil yapay zeka modelleri tanıtıldı. Türkçe dil desteği güçlendirildi.',
+      content: 'Detaylı haber içeriği...',
+      category: 'Teknoloji',
+      slug: 'yapay-zeka-atilim',
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
       publishedAt: new Date(Date.now() - 3600000).toISOString(),
-      source: 'VİZYON NEXUS',
-      author: 'Demo',
+      source: 'DEMO',
       url: '#',
-    }
+      author: 'Demo Yazar',
+    },
+    {
+      id: 'demo-3',
+      title: 'Süper Lig\'de Şampiyonluk Yarışı Kızışıyor',
+      summary: 'Ligin ikinci yarısına girilirken şampiyonluk adayları belli olmaya başladı.',
+      content: 'Detaylı haber içeriği...',
+      category: 'Spor',
+      slug: 'super-lig-sampiyonluk',
+      image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800',
+      publishedAt: new Date(Date.now() - 7200000).toISOString(),
+      source: 'DEMO',
+      url: '#',
+      author: 'Demo Yazar',
+    },
   ];
 
-  return demoArticles.slice(0, count);
+  return demos.slice(0, count);
 }
 
-// Health check endpoint for Render
+// ========================================
+// HEALTH & ROOT ENDPOINTS
+// ========================================
+
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  res.json({
     status: 'ok',
     environment: NODE_ENV,
+    hasApiKey: !!NEWS_API_KEY && NEWS_API_KEY !== 'demo',
     timestamp: new Date().toISOString()
   });
 });
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'VİZYON NEXUS API',
-    version: '1.0.0',
+    message: 'VİZYON NEXUS API v2.0',
     endpoints: {
-      news: '/news?section=world&limit=20',
+      news: '/api/news?pageSize=10',
       health: '/health'
-    }
+    },
+    docs: 'Backend NewsAPI proxy - CORS sorunu çözüldü'
   });
 });
 
-// Start server - bind to 0.0.0.0 for Render
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 API running on port ${PORT}`);
-  console.log(`📍 Environment: ${NODE_ENV}`);
-  console.log(`🔗 CORS Origin: ${CORS_ORIGIN}`);
+// ========================================
+// START SERVER
+// ========================================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('');
+  console.log('🚀 VİZYON NEXUS API');
+  console.log('================================');
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${NODE_ENV}`);
+  console.log(`🔗 CORS: ${CORS_ORIGIN}`);
+  console.log(`🔑 API Key: ${NEWS_API_KEY ? '✅ Ayarlandı' : '❌ YOK (demo mode)'}`);
+  console.log('================================');
+  console.log('');
 });

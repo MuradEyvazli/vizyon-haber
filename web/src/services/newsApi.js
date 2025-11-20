@@ -11,10 +11,16 @@ import axios from 'axios';
 // Backend API URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
+// NewsAPI Key - Frontend'den backend'e gönderilecek
+const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY || '';
+
 // Axios client
 const client = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
+  headers: {
+    'X-News-API-Key': NEWS_API_KEY, // API key'i header'da gönder
+  },
 });
 
 /**

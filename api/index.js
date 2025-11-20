@@ -58,24 +58,29 @@ app.get('/api/news', async (req, res) => {
     const { pageSize = 10 } = req.query;
     const limit = Math.min(parseInt(pageSize), 20);
 
+    // API Key - önce header'dan, yoksa environment'tan al
+    const apiKey = req.headers['x-news-api-key'] || NEWS_API_KEY;
+
     // API Key kontrolü
-    if (!NEWS_API_KEY || NEWS_API_KEY === 'demo') {
+    if (!apiKey || apiKey === 'demo') {
       console.log('⚠️ NEWS_API_KEY yok, demo data kullanılıyor');
       return res.json({
         success: true,
         source: 'demo',
         articles: getDemoNews(limit),
-        message: 'Demo veriler - NEWS_API_KEY environment variable ekleyin'
+        message: 'Demo veriler - VITE_NEWS_API_KEY veya NEWS_API_KEY ekleyin'
       });
     }
 
-    console.log('📡 NewsAPI çağrısı yapılıyor...');
+    console.log('📡 NewsAPI çağrısı yapılıyor... (key:', apiKey.substring(0, 10) + '...)');
 
-    // NewsAPI.org'a istek (backend'den, CORS yok!)
-    const response = await axios.get('https://newsapi.org/v2/top-headlines', {
+    // Türkiye haberleri için /everything endpoint kullan (ücretsiz planda tr desteklenmiyor)
+    const response = await axios.get('https://newsapi.org/v2/everything', {
       params: {
-        apiKey: NEWS_API_KEY,
-        country: 'tr',
+        apiKey: apiKey,
+        q: 'Turkey OR Türkiye OR Turkish', // Türkiye ile ilgili haberler
+        language: 'en', // İngilizce haberler (daha fazla sonuç)
+        sortBy: 'publishedAt',
         pageSize: limit,
       },
       timeout: 10000,

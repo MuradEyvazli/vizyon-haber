@@ -12,6 +12,7 @@ import NewsSlider from '../components/NewsSlider';
 import AsymmetricNewsGrid from '../components/AsymmetricNewsGrid';
 import Footer from '../components/Footer';
 import { fetchNews, fetchNewsByCategory } from '../../services/newsApi';
+import SEO, { StructuredData } from '../../components/SEO';
 
 export default function Home() {
   const [items, setItems] = useState([]);
@@ -63,6 +64,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="VİZYON NEXUS - Türkiye'nin Güvenilir Haber Portalı"
+        description="Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberlerini takip edin. Türkiye'nin en güvenilir haber kaynağı."
+        keywords="haber, son dakika, güncel haberler, Türkiye haberleri, dünya haberleri, ekonomi haberleri, spor haberleri, teknoloji"
+        image="/nexsus-logo.png"
+      />
+
+      {/* Structured Data - Organization */}
+      <StructuredData type="organization" />
+      <StructuredData type="website" />
+
       {/* Namaz Saatleri - En Üstte */}
       <PrayerTimes />
 

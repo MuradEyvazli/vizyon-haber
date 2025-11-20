@@ -1,0 +1,25 @@
+# Robots.txt - VİZYON NEXUS
+# https://vizyon-nexus.netlify.app/robots.txt
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Allow Google
+User-agent: Googlebot
+Allow: /
+
+# Allow Bing
+User-agent: Bingbot
+Allow: /
+
+# Disallow admin pages (if any)
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*.json$
+
+# Sitemap location
+Sitemap: https://vizyon-nexus.netlify.app/sitemap.xml
+
+# Crawl delay (optional, in seconds)
+Crawl-delay: 1

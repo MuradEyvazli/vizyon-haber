@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { mockNewsData } from '../../data/mockNews';
+import { fetchNews } from '../../services/newsApi';
 
 export default function Video() {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [embedError, setEmbedError] = useState(false);
+  const [newsData, setNewsData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const videoCategories = [
     { id: 'all', name: 'Tümü', icon: '🎬' },
@@ -14,6 +16,23 @@ export default function Video() {
     { id: 'documentary', name: 'Belgesel', icon: '🎥' },
     { id: 'interview', name: 'Röportaj', icon: '🎤' },
   ];
+
+  // Gerçek haberleri çek
+  useEffect(() => {
+    loadVideoNews();
+  }, []);
+
+  const loadVideoNews = async () => {
+    try {
+      setLoading(true);
+      const news = await fetchNews({ pageSize: 20, page: 1 });
+      setNewsData(news);
+    } catch (error) {
+      console.error('Video haberler yüklenemedi:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // YouTube video IDs - Embed edilebilir 24/7 canlı yayın ve haber videoları
   // Not: Bazı videolar embed kısıtlaması olabilir, bu durumda "YouTube'da İzle" fallback çalışır
@@ -35,8 +54,8 @@ export default function Video() {
     'fJ9rUzIMcZQ', // Keyboard Cat (embed friendly)
   ];
 
-  // Mock video data (using news data with video treatment)
-  const videos = mockNewsData.map((news, idx) => ({
+  // Gerçek haber verilerini video formatına dönüştür
+  const videos = newsData.map((news, idx) => ({
     id: idx,
     title: news.title,
     thumbnail: news.image,
@@ -59,6 +78,31 @@ export default function Video() {
     setEmbedError(false);
     setSelectedVideo(video);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white pb-24 lg:pb-0">
+        <div className="bg-white border-b border-slate-200 py-8">
+          <div className="container">
+            <h1 className="text-4xl font-black mb-2 flex items-center gap-3 text-slate-900">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              Video Haberler
+            </h1>
+          </div>
+        </div>
+        <div className="container py-16 text-center">
+          <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-slate-600 text-lg">Video haberler yükleniyor...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white pb-24 lg:pb-0">

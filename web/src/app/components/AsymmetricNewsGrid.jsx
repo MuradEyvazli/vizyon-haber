@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import NewsCard from './NewsCard';
 
 export default function AsymmetricNewsGrid({ items = [] }) {
@@ -7,6 +8,14 @@ export default function AsymmetricNewsGrid({ items = [] }) {
    * - Tablet (md): 2 kolon grid
    * - Desktop (lg): 3 kolon grid, ilk kart 2 kolon kaplar
    */
+
+  // Gösterilecek haber sayısı state'i - başlangıçta 12 haber
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Her tıklamada 10 haber daha göster
+  const loadMore = () => {
+    setVisibleCount(prev => prev + 10);
+  };
 
   if (!items.length) {
     return (
@@ -42,17 +51,20 @@ export default function AsymmetricNewsGrid({ items = [] }) {
           <NewsCard item={first} variant="hero" />
         </div>
 
-        {/* Regular Cards */}
-        {rest.slice(0, 11).map((item) => (
+        {/* Regular Cards - visibleCount kadar göster */}
+        {rest.slice(0, visibleCount - 1).map((item) => (
           <NewsCard key={item.id} item={item} />
         ))}
       </div>
 
-      {/* Load More Button */}
-      {items.length > 12 && (
+      {/* Load More Button - Daha fazla haber varsa göster */}
+      {rest.length > visibleCount - 1 && (
         <div className="mt-12 text-center">
-          <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all">
-            Daha Fazla Haber Yükle
+          <button
+            onClick={loadMore}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all"
+          >
+            Daha Fazla Haber Yükle ({rest.length - (visibleCount - 1)} haber daha var)
           </button>
         </div>
       )}

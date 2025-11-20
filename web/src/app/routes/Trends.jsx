@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { mockNewsData } from '../../data/mockNews';
+import { fetchNews } from '../../services/newsApi';
 
 export default function Trends() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [newsData, setNewsData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { id: 'all', name: 'Tümü', icon: '🔥', color: 'from-orange-500 to-red-500' },
@@ -14,6 +16,23 @@ export default function Trends() {
     { id: 'Spor', name: 'Spor', icon: '⚽', color: 'from-indigo-500 to-purple-500' },
   ];
 
+  // Gerçek haberleri çek
+  useEffect(() => {
+    loadTrendNews();
+  }, []);
+
+  const loadTrendNews = async () => {
+    try {
+      setLoading(true);
+      const news = await fetchNews({ pageSize: 20, page: 1 });
+      setNewsData(news);
+    } catch (error) {
+      console.error('Trend haberler yüklenemedi:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const trendingTopics = [
     { tag: '#YapayZeka', count: '125K gönderi' },
     { tag: '#İklimKrizi', count: '98K gönderi' },
@@ -23,20 +42,39 @@ export default function Trends() {
   ];
 
   const filteredNews = selectedCategory === 'all'
-    ? mockNewsData
-    : mockNewsData.filter(item => item.category === selectedCategory);
+    ? newsData
+    : newsData.filter(item => item.category === selectedCategory);
+
+  // Loading state
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 pb-24 lg:pb-0">
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white py-8">
+          <div className="container">
+            <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
+              <span className="text-5xl">🔥</span>
+              Keşfet
+            </h1>
+          </div>
+        </div>
+        <div className="container py-16 text-center">
+          <div className="animate-spin w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-slate-600 text-lg">Trend haberler yükleniyor...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 pb-24 lg:pb-0">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white py-8">
+      <div className="bg-gradient-to-r bg-gradient-to-r from-red-600 via-gray-800 to-gray-900 text-white py-8">
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <h1 className="text-4xl font-black mb-2 flex items-center gap-3">
-              <span className="text-5xl">🔥</span>
               Keşfet
             </h1>
             <p className="text-white/90 text-lg">Gündemdeki konular ve trend haberler</p>
@@ -48,28 +86,6 @@ export default function Trends() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-8">
-            {/* Category Filter */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Kategoriler</h2>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {categories.map((cat) => (
-                  <motion.button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all ${
-                      selectedCategory === cat.id
-                        ? `bg-gradient-to-r ${cat.color} text-white shadow-lg scale-105`
-                        : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className="text-2xl">{cat.icon}</span>
-                    <span>{cat.name}</span>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
             {/* News Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {filteredNews.map((item, idx) => (
@@ -169,7 +185,7 @@ export default function Trends() {
                     Şu Anda Popüler
                   </h3>
                   <div className="space-y-3">
-                    {mockNewsData.slice(0, 5).map((news, idx) => (
+                    {newsData.slice(0, 5).map((news, idx) => (
                       <div key={idx} className="flex gap-3 group cursor-pointer">
                         <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
                           <img

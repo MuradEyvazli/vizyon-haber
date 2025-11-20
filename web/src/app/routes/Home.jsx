@@ -132,14 +132,27 @@ export default function Home() {
       {/* Gelişmiş Canlı Saat - Ana Konum + Yakın Ülkeler + Dünya Saatleri */}
       <EnhancedClock location={location} />
 
-      {/* Canlı Widget'lar - Saat, Hava Durumu, Dünya Kameraları */}
-      <LiveWidgets />
+      {/* Ana Haber Grid */}
+      <motion.div
+        id="news-section"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="scroll-mt-20"
+      >
+        <AsymmetricNewsGrid items={items} />
+      </motion.div>
 
       {/* Havalimanı Bilgileri - İstanbul, Ankara, Sabiha Gökçen */}
       <AirportLinks />
+      
+      {/* Canlı Widget'lar - Saat, Hava Durumu, Dünya Kameraları */}
+      <LiveWidgets />
 
       {/* Hızlı Linkler - Alışveriş */}
       <QuickLinks />
+
 
       {/* Bugün Ne Pişirelim - Günlük Yemek Önerisi */}
       <DailyRecipe />
@@ -153,17 +166,7 @@ export default function Home() {
         />
       )}
 
-      {/* Ana Haber Grid */}
-      <motion.div
-        id="news-section"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="scroll-mt-20"
-      >
-        <AsymmetricNewsGrid items={items} />
-      </motion.div>
+      
 
       {/* Dünya Haberleri Slider - Daha Fazla Haber */}
       {dunya.length > 0 && (
@@ -172,96 +175,6 @@ export default function Home() {
           title="Dünya Haberleri"
           gradient="gradient-ocean"
         />
-      )}
-
-      {/* Daha Çok Haber Yükle Butonu */}
-      {hasMore && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="container py-16"
-        >
-          <div className="flex justify-center">
-            <motion.button
-              onClick={loadMoreNews}
-              disabled={loadingMore}
-              whileHover={{ scale: loadingMore ? 1 : 1.05 }}
-              whileTap={{ scale: loadingMore ? 1 : 0.95 }}
-              className="group relative px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-            >
-              {/* Animasyonlu Arkaplan */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600"
-                animate={{
-                  x: loadingMore ? ['-100%', '100%'] : 0,
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: loadingMore ? Infinity : 0,
-                  ease: "linear",
-                }}
-              />
-
-              {/* İçerik */}
-              <span className="relative flex items-center gap-4">
-                {loadingMore ? (
-                  <>
-                    <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                    Haberler Yükleniyor...
-                  </>
-                ) : (
-                  <>
-                    Daha Çok Haber Yükle
-                    <svg
-                      className="w-6 h-6 group-hover:translate-y-1 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </>
-                )}
-              </span>
-            </motion.button>
-          </div>
-
-          {/* Bilgi Text */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-center mt-6 text-gray-400"
-          >
-            Sayfa {currentPage} • {items.length} haber yüklendi
-          </motion.p>
-        </motion.div>
-      )}
-
-      {/* Tüm Haberler Yüklendi Mesajı */}
-      {!hasMore && items.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="container py-16"
-        >
-          <div className="text-center">
-            <div className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-2xl">
-              <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-              </svg>
-              <span className="text-white font-semibold text-lg">
-                Tüm Haberler Yüklendi ({items.length} haber)
-              </span>
-            </div>
-          </div>
-        </motion.div>
       )}
 
       {/* Video Haberler - Clean & Simple */}

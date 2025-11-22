@@ -171,29 +171,33 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* Döviz Kurları Mini Ticker */}
-      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600">
-        <div className="container">
-          <div className="flex items-center justify-center gap-6 py-2">
-            <div className="flex items-center gap-2 text-white text-xs font-semibold">
+      {/* Döviz Kurları Mini Ticker - Responsive */}
+      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 overflow-hidden">
+        <div className="container px-2 md:px-4">
+          <div className="flex items-center justify-center gap-2 md:gap-6 py-1.5 md:py-2">
+            {/* DÖVİZ label - sadece desktop */}
+            <div className="hidden md:flex items-center gap-2 text-white text-xs font-semibold">
               <span className="opacity-70">DÖVİZ:</span>
             </div>
-            <div className="flex items-center gap-1.5 text-white">
-              <span className="text-xs opacity-70">$</span>
-              <span className="text-sm font-bold">USD</span>
-              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.USD}</span>
+            {/* USD */}
+            <div className="flex items-center gap-1 text-white">
+              <span className="text-[10px] md:text-xs opacity-70">$</span>
+              <span className="text-[11px] md:text-sm font-bold">USD</span>
+              <span className="text-[11px] md:text-sm font-black text-yellow-300">₺{exchangeRates.USD}</span>
             </div>
-            <div className="w-px h-4 bg-white/30" />
-            <div className="flex items-center gap-1.5 text-white">
-              <span className="text-xs opacity-70">€</span>
-              <span className="text-sm font-bold">EUR</span>
-              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.EUR}</span>
+            <div className="w-px h-3 md:h-4 bg-white/30" />
+            {/* EUR */}
+            <div className="flex items-center gap-1 text-white">
+              <span className="text-[10px] md:text-xs opacity-70">€</span>
+              <span className="text-[11px] md:text-sm font-bold">EUR</span>
+              <span className="text-[11px] md:text-sm font-black text-yellow-300">₺{exchangeRates.EUR}</span>
             </div>
-            <div className="w-px h-4 bg-white/30" />
-            <div className="flex items-center gap-1.5 text-white">
-              <span className="text-xs opacity-70">£</span>
-              <span className="text-sm font-bold">GBP</span>
-              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.GBP}</span>
+            <div className="w-px h-3 md:h-4 bg-white/30" />
+            {/* GBP */}
+            <div className="flex items-center gap-1 text-white">
+              <span className="text-[10px] md:text-xs opacity-70">£</span>
+              <span className="text-[11px] md:text-sm font-bold">GBP</span>
+              <span className="text-[11px] md:text-sm font-black text-yellow-300">₺{exchangeRates.GBP}</span>
             </div>
           </div>
         </div>

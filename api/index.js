@@ -146,7 +146,7 @@ async function fetchFromCurrents(pageSize, page) {
       page_size: pageSize,
       page_number: page,
     },
-    timeout: 5000,
+    timeout: 3000,
   });
 
   if (response.data.status === 'ok' && response.data.news) {
@@ -183,7 +183,7 @@ async function fetchFromNewsData(pageSize, page) {
       language: 'tr',
       size: pageSize,
     },
-    timeout: 5000,
+    timeout: 3000,
   });
 
   if (response.data.status === 'success' && response.data.results) {
@@ -221,7 +221,7 @@ async function fetchFromNewsAPI(pageSize, page) {
       pageSize: pageSize,
       page: page,
     },
-    timeout: 5000,
+    timeout: 3000,
   });
 
   if (response.data.status === 'ok' && response.data.articles) {
@@ -319,14 +319,12 @@ async function fetchNewsHybrid(pageSize, page) {
     };
   }
 
-  console.log('🚀 API\'ler çağrılıyor... (Hızlı mod - ilk gelen kazanır)');
+  console.log('🚀 HIZLI MOD: İlk başarılı API kazanır!');
 
-  // 2. HIZLI MOD: İlk başarılı API'den dönen sonucu kullan
-  // Her API kendi timeout'u ile çalışır, biri gelince devam et
-  let allArticles = [];
+  // 2. SÜPER HIZLI MOD: İlk başarılı sonucu hemen döndür
   const apiResults = { currents: 0, newsdata: 0, newsapi: 0 };
 
-  // Timeout wrapper - 5 saniye max
+  // Timeout wrapper - 3 saniye max (daha kısa!)
   const withTimeout = (promise, ms, name) => {
     return Promise.race([
       promise,
@@ -336,54 +334,53 @@ async function fetchNewsHybrid(pageSize, page) {
     ]);
   };
 
-  // API çağrılarını başlat
-  const apiPromises = [
-    withTimeout(fetchFromCurrents(pageSize, page), 5000, 'Currents')
-      .then(data => { apiResults.currents = data.length; return data; })
-      .catch(() => []),
-    withTimeout(fetchFromNewsData(pageSize, page), 5000, 'NewsData')
-      .then(data => { apiResults.newsdata = data.length; return data; })
-      .catch(() => []),
-    withTimeout(fetchFromNewsAPI(pageSize, page), 5000, 'NewsAPI')
-      .then(data => { apiResults.newsapi = data.length; return data; })
-      .catch(() => [])
-  ];
+  // Her API'yi ayrı ayrı sarmalayıp, ilk başarılı olanı al
+  const makeApiCall = async (fetchFn, name, timeout) => {
+    try {
+      const data = await withTimeout(fetchFn, timeout, name);
+      if (data && data.length > 0) {
+        return { source: name, data };
+      }
+    } catch (e) {
+      console.log(`⚠️ ${name}: ${e.message}`);
+    }
+    return null;
+  };
 
-  // Tüm API'leri paralel çağır ama MAX 6 saniye bekle
+  // İLK BAŞARILI API KAZANIR - Promise.race ile
   try {
-    const results = await Promise.race([
-      Promise.all(apiPromises),
-      new Promise((resolve) => setTimeout(() => resolve([[], [], []]), 6000))
+    const firstSuccess = await Promise.race([
+      // Her API'yi race'e sok - ilk dönen kazanır
+      makeApiCall(fetchFromCurrents(pageSize, page), 'Currents', 3000),
+      makeApiCall(fetchFromNewsData(pageSize, page), 'NewsData', 3000),
+      makeApiCall(fetchFromNewsAPI(pageSize, page), 'NewsAPI', 3000),
+      // 4 saniye global timeout
+      new Promise(resolve => setTimeout(() => resolve(null), 4000))
     ]);
 
-    allArticles = results.flat().filter(article => article);
+    if (firstSuccess && firstSuccess.data && firstSuccess.data.length > 0) {
+      console.log(`✅ ${firstSuccess.source}'dan ${firstSuccess.data.length} haber alındı!`);
+
+      // Cache'e kaydet (2 saat)
+      const shuffled = shuffleArray(firstSuccess.data);
+      cache.set(cacheKey, shuffled, 7200);
+
+      return {
+        articles: shuffled,
+        source: firstSuccess.source,
+        cached: false
+      };
+    }
   } catch (error) {
     console.error('❌ API hatası:', error.message);
   }
 
-  console.log(`📊 Sonuç: Currents:${apiResults.currents} NewsData:${apiResults.newsdata} NewsAPI:${apiResults.newsapi} = ${allArticles.length} haber`);
-
   // 3. Hiç haber yoksa demo data
-  if (allArticles.length === 0) {
-    console.warn('⚠️ Demo data kullanılıyor');
-    return {
-      articles: getDemoNews(pageSize),
-      source: 'demo',
-      cached: false
-    };
-  }
-
-  // 4. Karıştır ve cache'e kaydet (2 saat)
-  const shuffled = shuffleArray(allArticles);
-  cache.set(cacheKey, shuffled, 7200); // 2 saat cache
-
-  console.log(`✅ ${shuffled.length} haber hazır!`);
-
+  console.warn('⚠️ Demo data kullanılıyor');
   return {
-    articles: shuffled,
-    source: 'Hybrid',
-    cached: false,
-    stats: apiResults
+    articles: getDemoNews(pageSize),
+    source: 'demo',
+    cached: false
   };
 }
 
@@ -620,11 +617,25 @@ app.get('/', (req, res) => {
 });
 
 // ========================================
+// CACHE WARM-UP - Server başlarken haberleri önceden yükle
+// ========================================
+async function warmUpCache() {
+  console.log('🔥 Cache ısınıyor... Haberler önceden yükleniyor...');
+  try {
+    // İlk sayfa haberleri önceden yükle
+    await fetchNewsHybrid(20, 1);
+    console.log('✅ Cache hazır! Kullanıcılar anında haber görecek.');
+  } catch (error) {
+    console.log('⚠️ Cache warm-up başarısız:', error.message);
+  }
+}
+
+// ========================================
 // START SERVER
 // ========================================
 app.listen(PORT, '0.0.0.0', () => {
   console.log('');
-  console.log('🚀 Kısa Haber API v3.0 - HİBRİT SİSTEM');
+  console.log('🚀 Kısa Haber API v3.0 - SÜPER HIZLI MOD');
   console.log('==========================================');
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${NODE_ENV}`);
@@ -635,8 +646,14 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   NewsData.io:  ${NEWSDATA_API_KEY ? '✅ Aktif (200 req/day)' : '❌ Yok'}`);
   console.log(`   NewsAPI:      ${NEWS_API_KEY ? '✅ Aktif (100 req/day)' : '❌ Yok'}`);
   console.log('');
-  console.log('💾 Cache: 1 saat TTL');
-  console.log('🔄 Otomatik Fallback: Aktif');
+  console.log('⚡ Hız Optimizasyonları:');
+  console.log('   - İlk başarılı API kazanır (Promise.race)');
+  console.log('   - 3 saniye API timeout');
+  console.log('   - 4 saniye global timeout');
+  console.log('   - 2 saat cache TTL');
   console.log('==========================================');
   console.log('');
+
+  // Server başladıktan sonra cache'i ısıt
+  setTimeout(warmUpCache, 1000);
 });

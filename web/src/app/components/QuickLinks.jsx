@@ -9,10 +9,10 @@ export default function QuickLinks() {
   ];
 
   const airportLinks = [
-    { name: 'İstanbul Havalimanı', code: 'IST', flights: '45 Uçuş', url: '#' },
-    { name: 'Sabiha Gökçen', code: 'SAW', flights: '32 Uçuş', url: '#' },
-    { name: 'Ankara Esenboğa', code: 'ESB', flights: '18 Uçuş', url: '#' },
-    { name: 'İzmir Adnan Menderes', code: 'ADB', flights: '22 Uçuş', url: '#' },
+    { name: 'İstanbul Havalimanı', code: 'IST', flights: 'Bilet Al', url: 'https://www.obilet.com/ucak-bileti/istanbul' },
+    { name: 'Sabiha Gökçen', code: 'SAW', flights: 'Bilet Al', url: 'https://www.obilet.com/ucak-bileti' },
+    { name: 'Ankara Esenboğa', code: 'ESB', flights: 'Bilet Al', url: 'https://www.obilet.com/ucak-bileti/ankara' },
+    { name: 'İzmir Adnan Menderes', code: 'ADB', flights: 'Bilet Al', url: 'https://www.obilet.com/ucak-bileti/izmir' },
   ];
 
   const importantLinks = [
@@ -73,24 +73,32 @@ export default function QuickLinks() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {airportLinks.map((airport, idx) => (
-              <motion.div
+              <motion.a
                 key={idx}
+                href={airport.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
                 whileHover={{ y: -4 }}
-                className="bg-white border-2 border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:border-blue-500 transition-all cursor-pointer"
+                className="bg-white border-2 border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:border-blue-500 transition-all cursor-pointer block"
               >
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-4xl font-black text-blue-600">{airport.code}</span>
-                  <span className="px-3 py-1 bg-red-500 text-white text-xs rounded-full font-bold">
-                    CANLI
+                  <span className="px-3 py-1 bg-green-500 text-white text-xs rounded-full font-bold">
+                    Bilet Al
                   </span>
                 </div>
                 <div className="font-semibold text-slate-900 mb-2">{airport.name}</div>
-                <div className="text-sm text-slate-600">{airport.flights}</div>
-              </motion.div>
+                <div className="text-sm text-slate-600 flex items-center gap-1">
+                  <span>Uçuş Ara</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </div>
+              </motion.a>
             ))}
           </div>
         </motion.div>

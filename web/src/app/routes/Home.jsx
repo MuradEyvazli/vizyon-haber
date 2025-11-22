@@ -22,6 +22,52 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  // Türk haber kanalları - YouTube kanal linkleri (canlı yayın sayfaları)
+  const turkishNewsChannels = [
+    {
+      name: 'TRT Haber',
+      liveUrl: 'https://www.youtube.com/@TRTHaber/live',
+      channelUrl: 'https://www.youtube.com/@TRTHaber',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_nOVjxFi_QL-8bCbUR2Zv7WDdqpjEeGPr_Wm_8=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-red-600 to-red-800'
+    },
+    {
+      name: 'NTV',
+      liveUrl: 'https://www.youtube.com/@ntv/live',
+      channelUrl: 'https://www.youtube.com/@ntv',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_l0fqIzTvmqhZzxIgBzqKJHp0GNvBcoqxJBsls=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-blue-600 to-blue-800'
+    },
+    {
+      name: 'CNN Türk',
+      liveUrl: 'https://www.youtube.com/@caborahaber/live',
+      channelUrl: 'https://www.youtube.com/@caborahaber',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_mVvlJ3eSxkVrTnQdCO0_6wOxuXb1wjLqMpkik=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-red-700 to-orange-600'
+    },
+    {
+      name: 'Habertürk',
+      liveUrl: 'https://www.youtube.com/@Haberturk/live',
+      channelUrl: 'https://www.youtube.com/@Haberturk',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_kRxoLbFfZE-nQY8fYhM1Pj-vqEqJnGg4c=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-orange-500 to-red-600'
+    },
+    {
+      name: 'A Haber',
+      liveUrl: 'https://www.youtube.com/@AHaber/live',
+      channelUrl: 'https://www.youtube.com/@AHaber',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_kiTCU7TZBrJdXcFjyV_lqgmUbEXs=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-red-500 to-red-700'
+    },
+    {
+      name: 'TRT 1',
+      liveUrl: 'https://www.youtube.com/@taborac/live',
+      channelUrl: 'https://www.youtube.com/@taborac',
+      logo: 'https://yt3.googleusercontent.com/ytc/AIdro_nJJfXb2VeSpGk0_Q7PDwpM8q8=s176-c-k-c0x00ffffff-no-rj',
+      color: 'from-blue-500 to-purple-600'
+    },
+  ];
+
   useEffect(() => {
     loadNews();
   }, []);
@@ -140,9 +186,6 @@ export default function Home() {
       >
         <AsymmetricNewsGrid items={items} />
       </motion.div>
-
-      {/* Havalimanı Bilgileri - İstanbul, Ankara, Sabiha Gökçen */}
-      <AirportLinks />
       
       {/* Canlı Widget'lar - Saat, Hava Durumu, Dünya Kameraları */}
       <LiveWidgets />
@@ -174,12 +217,12 @@ export default function Home() {
         />
       )}
 
-      {/* Video Haberler - Clean & Simple */}
+      {/* Canlı TV - Türk Haber Kanalları */}
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20"
+        className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-20"
       >
         <div className="container">
           {/* Header */}
@@ -190,56 +233,85 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-5xl font-black text-white mb-4 flex items-center justify-center gap-3">
-              <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-              </svg>
-              Video Haberler
+              <span className="relative flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+              </span>
+              Canlı TV
             </h2>
-            <p className="text-white/80 text-xl">En son video haberleri izleyin</p>
+            <p className="text-white/70 text-lg">Türk haber kanallarını canlı izleyin</p>
           </motion.div>
 
-          {/* Video Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {items.slice(0, 3).map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+          {/* TV Kanal Kartları */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {turkishNewsChannels.map((channel, idx) => (
+              <motion.a
+                key={channel.name}
+                href={channel.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.15 }}
-                className="group cursor-pointer"
+                transition={{ delay: idx * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="group"
               >
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-500">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                <div className={`relative bg-gradient-to-br ${channel.color} rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden`}>
+                  {/* Glow Effect */}
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                  {/* Play Button */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-125 group-hover:bg-red-700 transition-all shadow-2xl">
-                      <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
+                  {/* Live Badge */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                    </span>
+                    <span className="text-white text-xs font-bold">CANLI</span>
+                  </div>
+
+                  {/* Channel Logo */}
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <img
+                      src={channel.logo}
+                      alt={channel.name}
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div className="hidden items-center justify-center text-white text-2xl font-black">
+                      {channel.name.charAt(0)}
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <div className="inline-block px-3 py-1 bg-red-600 rounded-lg text-white text-xs font-bold mb-3">
-                      CANLI
-                    </div>
-                    <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-white/70 text-sm">Video Haber</p>
+                  {/* Channel Name */}
+                  <h3 className="text-white font-bold text-center text-sm mb-2">
+                    {channel.name}
+                  </h3>
+
+                  {/* Watch Button */}
+                  <div className="flex items-center justify-center gap-2 text-white/80 text-xs group-hover:text-white transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span>İzle</span>
                   </div>
                 </div>
-              </motion.div>
+              </motion.a>
             ))}
           </div>
+
+          {/* Info Text */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-white/50 text-sm mt-8"
+          >
+            Tıklayarak YouTube üzerinden canlı yayını izleyebilirsiniz
+          </motion.p>
         </div>
       </motion.div>
 

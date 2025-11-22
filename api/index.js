@@ -52,6 +52,11 @@ setInterval(() => {
 // EXPRESS SETUP
 // ========================================
 const app = express();
+
+// Render/Vercel gibi reverse proxy arkasında çalışırken gerekli
+// X-Forwarded-For header'ını doğru okumak için
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(express.json({ limit: '200kb' }));
 app.use(cookieParser());
@@ -168,7 +173,7 @@ async function fetchFromCurrents(pageSize, page) {
   throw new Error('Currents API - Haber bulunamadı');
 }
 
-// 2. NewsData.io - 200 req/day FREE
+// 2. NewsData.io - 200 req/day FREE (Max 10 results per request on free plan)
 async function fetchFromNewsData(pageSize, page) {
   if (!NEWSDATA_API_KEY || !canUseAPI('newsdata', 200)) {
     throw new Error('NewsData API kullanılamıyor');
@@ -176,18 +181,20 @@ async function fetchFromNewsData(pageSize, page) {
 
   console.log(`📡 NewsData API çağrısı... (${apiUsage.newsdata.count}/200)`);
 
-  const response = await axios.get('https://newsdata.io/api/1/news', {
+  // Free plan'da max 10 result
+  const actualSize = Math.min(pageSize, 10);
+
+  const response = await axios.get('https://newsdata.io/api/1/latest', {
     params: {
       apikey: NEWSDATA_API_KEY,
       country: 'tr',
       language: 'tr',
-      size: pageSize,
     },
     timeout: 3000,
   });
 
   if (response.data.status === 'success' && response.data.results) {
-    return response.data.results.map((article, index) => ({
+    return response.data.results.slice(0, actualSize).map((article, index) => ({
       id: `newsdata-${Date.now()}-${index}`,
       title: article.title,
       summary: article.description || 'Haber detayları için tıklayın.',
@@ -617,17 +624,45 @@ app.get('/', (req, res) => {
 });
 
 // ========================================
-// CACHE WARM-UP - Server başlarken haberleri önceden yükle
+// CACHE WARM-UP - Otomatik cache yenileme sistemi
 // ========================================
-async function warmUpCache() {
-  console.log('🔥 Cache ısınıyor... Haberler önceden yükleniyor...');
+async function warmUpCache(isInitial = false) {
+  const prefix = isInitial ? '🔥 İLK YÜKLEME' : '🔄 PERİYODİK YENİLEME';
+  console.log(`${prefix}: Cache ısınıyor...`);
+
   try {
-    // İlk sayfa haberleri önceden yükle
-    await fetchNewsHybrid(20, 1);
-    console.log('✅ Cache hazır! Kullanıcılar anında haber görecek.');
+    // Cache'i temizle ve yeni veri çek (force refresh)
+    const cacheKey = 'news-20-1';
+
+    // Eğer cache varsa ve periyodik yenilemeyse, cache'i sil
+    if (!isInitial && cache.has(cacheKey)) {
+      cache.del(cacheKey);
+      console.log('🗑️ Eski cache silindi');
+    }
+
+    // Yeni haberleri çek
+    const result = await fetchNewsHybrid(20, 1);
+
+    if (result.articles && result.articles.length > 0) {
+      console.log(`✅ ${prefix} BAŞARILI: ${result.articles.length} haber cache'lendi (${result.source})`);
+    } else {
+      console.log(`⚠️ ${prefix}: Haber bulunamadı`);
+    }
   } catch (error) {
-    console.log('⚠️ Cache warm-up başarısız:', error.message);
+    console.log(`❌ ${prefix} BAŞARISIZ:`, error.message);
   }
+}
+
+// Periyodik cache yenileme - Her 30 dakikada bir
+function startPeriodicCacheRefresh() {
+  const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 dakika
+
+  setInterval(async () => {
+    console.log('\n⏰ Zamanlanmış cache yenileme başlıyor...');
+    await warmUpCache(false);
+  }, REFRESH_INTERVAL);
+
+  console.log(`📅 Periyodik cache yenileme aktif (her 30 dakika)`);
 }
 
 // ========================================
@@ -655,5 +690,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('');
 
   // Server başladıktan sonra cache'i ısıt
-  setTimeout(warmUpCache, 1000);
+  setTimeout(() => {
+    warmUpCache(true);  // İlk yükleme
+    startPeriodicCacheRefresh();  // Periyodik yenileme başlat
+  }, 1000);
 });

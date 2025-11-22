@@ -1,8 +1,8 @@
-# 🌐 VİZYON NEXUS
+# 📰 KISA HABER
 
-> **Yeni Nesil Mobil-Öncelikli Haber Platformu**
+> **Türkiye'nin En Güncel Haber Portalı - Mobil-Öncelikli Tasarım**
 
-VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yüksek güvenlikli ve mobil öncelikli tasarıma sahip modern bir dijital platformdur.
+Kısa Haber, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yüksek güvenlikli ve mobil öncelikli tasarıma sahip modern bir dijital haber platformudur.
 
 ![React](https://img.shields.io/badge/React-19.2.0-blue?logo=react)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)
@@ -19,7 +19,6 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 - [Proje Yapısı](#-proje-yapısı)
 - [Deployment](#-deployment)
 - [Güvenlik](#-güvenlik-önlemleri)
-- [Roadmap](#️-roadmap)
 
 ---
 
@@ -30,43 +29,40 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 - **Fuzzy Search**: Yazım hatalarına toleranslı arama
 - **Türkçe Karakter Desteği**: ç, ğ, ı, ö, ş, ü normalizasyonu
 - **Çoklu Alan Arama**: Başlık, özet, içerik, kategori, yazar, kaynak
-- **Highlight**: Eşleşen kelimelerin sarı ile vurgulanması
-- **Debounce Optimizasyonu**: 300ms gecikme ile performans
-- **Rich Results**: Haber görseli preview ve kategori badge'leri
+- **Highlight**: Eşleşen kelimelerin vurgulanması
 
-### 📰 Gerçek Haber Entegrasyonu
-- **NewsAPI Entegrasyonu**: Türk haber sitelerinden canlı haberler
-- **8 Türk Kaynak**: sabah.com.tr, hurriyet.com.tr, milliyet.com.tr, sozcu.com.tr, haberturk.com, ntv.com.tr, cnnturk.com, trthaber.com
-- **Pagination**: Her sayfada 20 haber, sınırsız yükleme
-- **Backend Proxy**: CORS sorunu çözümü ile güvenli API çağrıları
-- **Fallback System**: API hatalarında demo data desteği
+### 📰 Hibrit Haber Sistemi (3 API Paralel)
+- **Currents API**: 600 istek/gün (ücretsiz)
+- **NewsData.io**: 200 istek/gün (ücretsiz)
+- **NewsAPI**: 100 istek/gün (ücretsiz)
+- **Toplam**: 900+ istek/gün kapasitesi
+- **Fisher-Yates Shuffle**: Haberler karışık gösterilir
+- **Akıllı Cache**: 1 saat TTL ile performans optimizasyonu
 
 ### 📱 Mobil-First Tasarım
 - %70+ mobil trafik için optimize edilmiş UX/UI
 - Touch-friendly minimum 48px dokunma alanları
-- Tek elle kullanıma uygun ergonomik navigasyon
 - Progressive Web App (PWA) desteği
 
 ### 🎨 Modern Estetik
 - Gradient header ve card hover efektleri
-- Asimetrik grid düzeni (hero card + standard cards)
+- Asimetrik grid düzeni
 - Renkli kategori badge sistemi
-- Smooth animations ve transitions (Framer Motion)
-- Breaking news ticker (Son dakika haberleri)
+- Smooth animations (Framer Motion)
+- Breaking news ticker
 
-### 🔒 Güvenlik Öncelikleri
-- **XSS Protection**: DOMPurify ile HTML sanitization
-- **CSP Headers**: Content Security Policy
-- **Rate Limiting**: API isteklerinde hız sınırlama (100 req/min)
-- **CSRF Token**: Cross-site request forgery koruması
-- **Helmet.js**: HTTP header güvenlik katmanı
+### 🔒 Güvenlik
+- XSS Protection (DOMPurify)
+- CSP Headers
+- Rate Limiting (100 req/min)
+- Helmet.js
 
-### ⚡ Performans
-- Vite ile lightning-fast HMR
-- Lazy loading görseller
-- Optimized bundle size
-- CDN-ready architecture
-- LocalStorage caching
+### 🔎 SEO Optimizasyonu
+- Profesyonel meta tags
+- Open Graph (Facebook, LinkedIn)
+- Twitter Cards
+- JSON-LD Structured Data (NewsMediaOrganization)
+- Google Rich Results desteği
 
 ---
 
@@ -79,27 +75,15 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 | **Tailwind CSS** | v4 | Utility-first styling |
 | **Vite** | 7.2.2 | Build tool & dev server |
 | **Axios** | 1.13.2 | HTTP client |
-| **DOMPurify** | 3.3.0 | XSS protection |
 | **Framer Motion** | 12.23.24 | Animasyonlar |
-| **Zod** | 4.1.12 | Schema validation |
-| **Swiper** | 12.0.3 | Touch slider |
 
 ### Backend (`/api`)
 | Teknoloji | Versiyon | Kullanım Amacı |
 |-----------|----------|----------------|
 | **Express.js** | 4.21.1 | REST API Framework |
-| **Axios** | 1.13.2 | NewsAPI client |
+| **Node Cache** | 5.1.2 | In-memory caching |
 | **Helmet** | 7.1.0 | Security headers |
 | **CORS** | 2.8.5 | Cross-origin requests |
-| **Express Rate Limit** | 7.4.0 | Rate limiting |
-| **JWT** | 9.0.2 | Authentication |
-| **Morgan** | 1.10.0 | Request logging |
-
-### Dış Servisler
-| Servis | Kullanım Amacı |
-|--------|----------------|
-| **NewsAPI** | Türk haber sitelerinden gerçek haberler |
-| **Unsplash** | Placeholder görseller (demo) |
 
 ---
 
@@ -111,14 +95,25 @@ VİZYON NEXUS, geleneksel haber sitelerinin tekdüzeliğini yıkan, estetik, yü
 
 ### 1. Projeyi Klonlayın
 ```bash
-git clone https://github.com/kullanici-adi/vizyon-nexus.git
-cd vizyon-nexus
+git clone https://github.com/muradeyvazli/kisa-haber.git
+cd kisa-haber
 ```
 
 ### 2. Backend Kurulumu
 ```bash
 cd api
 npm install
+
+# .env dosyası oluşturun
+cat > .env << EOF
+PORT=3001
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+CURRENTS_API_KEY=your_currents_api_key
+NEWSDATA_API_KEY=your_newsdata_api_key
+NEWS_API_KEY=your_newsapi_key
+EOF
+
 npm run dev
 ```
 Backend: **http://localhost:3001**
@@ -131,65 +126,50 @@ npm install
 # .env.local dosyası oluşturun
 cat > .env.local << EOF
 VITE_API_BASE_URL=http://localhost:3001
-VITE_NEWS_API_KEY=your_newsapi_key_here
 EOF
 
 npm run dev
 ```
 Frontend: **http://localhost:5173**
 
-### 4. NewsAPI Key (Opsiyonel)
-Gerçek haberler için [NewsAPI](https://newsapi.org/) key alın:
-1. https://newsapi.org/register adresine gidin
-2. Ücretsiz API key alın
-3. `.env.local` dosyasına ekleyin: `VITE_NEWS_API_KEY=your_key`
-4. Backend `.env` dosyasına da ekleyin: `NEWS_API_KEY=your_key`
-
-**Not**: API key olmadan demo haberler gösterilir.
-
-### 4. Tarayıcıda Açın
-```
-http://localhost:5173
-```
+### 4. API Key'leri Alın (Ücretsiz)
+- [Currents API](https://currentsapi.services/) - 600 req/day
+- [NewsData.io](https://newsdata.io/) - 200 req/day
+- [NewsAPI](https://newsapi.org/) - 100 req/day
 
 ---
 
 ## 📂 Proje Yapısı
 
 ```
-vizyon-nexus/
+kisa-haber/
 ├── api/                          # Backend (Express.js)
-│   ├── index.js                  # API entry point
+│   ├── index.js                  # Hibrit API sistemi
 │   ├── package.json
-│   └── node_modules/
+│   └── .env
 │
 ├── web/                          # Frontend (React + Vite)
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── components/       # UI Bileşenleri
-│   │   │   │   ├── TopBar.jsx    # Gradient header
-│   │   │   │   ├── BottomNav.jsx # Mobil navigasyon
-│   │   │   │   ├── NewsCard.jsx  # Haber kartları
-│   │   │   │   └── AsymmetricNewsGrid.jsx
-│   │   │   ├── routes/           # Sayfa komponentleri
-│   │   │   │   ├── HomePage.jsx
-│   │   │   │   ├── CategoryPage.jsx
-│   │   │   │   └── ArticlePage.jsx
-│   │   │   └── utils/            # SEO, helpers
-│   │   ├── data/                 # Mock data
-│   │   ├── services/             # API, auth
-│   │   │   └── api.js
-│   │   ├── main.jsx              # React entry point
-│   │   └── index.css             # Global styles
-│   ├── public/                   # Static assets
-│   │   ├── manifest.webmanifest
-│   │   └── icon-192.png
-│   ├── index.html
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── package.json
+│   │   │   │   ├── TopBar.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   └── ...
+│   │   │   └── routes/           # Sayfa komponentleri
+│   │   │       ├── Home.jsx
+│   │   │       ├── Trends.jsx
+│   │   │       └── NewsDetail.jsx
+│   │   ├── components/
+│   │   │   └── SEO.jsx           # SEO & Structured Data
+│   │   ├── services/
+│   │   │   ├── newsApi.js        # Haber API servisi
+│   │   │   └── weather.js        # Hava durumu
+│   │   └── main.jsx
+│   ├── public/
+│   │   ├── og-image.jpg          # Open Graph image
+│   │   └── manifest.webmanifest
+│   └── index.html                # SEO meta tags
 │
-├── .gitignore
 └── README.md
 ```
 
@@ -197,236 +177,50 @@ vizyon-nexus/
 
 ## 🌐 Deployment
 
-### Frontend Deployment (Netlify)
-
-#### Otomatik Deployment (Önerilen)
-
-1. **GitHub'a Push Edin**
-```bash
-git add .
-git commit -m "Initial commit"
-git push origin main
-```
-
-2. **Netlify'da Yeni Site Oluşturun**
-   - [Netlify](https://app.netlify.com) → "Add new site" → "Import from Git"
-   - GitHub repository'nizi seçin
-
-3. **Build Ayarları**
+### Frontend (Netlify)
 ```
 Base directory: web
 Build command: npm run build
 Publish directory: web/dist
 ```
 
-4. **Environment Variables**
+Environment Variables:
 ```
 VITE_API_BASE_URL=https://your-api-url.com
-VITE_NEWS_API_KEY=your_newsapi_key_here
 ```
 
-5. **Deploy!** Netlify otomatik olarak build edip deploy edecektir.
-
-#### Manuel Deployment
-
-```bash
-cd web
-npm run build
-npx netlify deploy --prod --dir=dist
-```
-
-### Backend Deployment (Render / Railway / Heroku)
-
-#### Render.com (Ücretsiz)
-
-1. [Render.com](https://render.com) → "New Web Service"
-2. GitHub repository'nizi bağlayın
-3. Ayarlar:
+### Backend (Render.com)
 ```
 Root Directory: api
 Build Command: npm install
 Start Command: npm start
 ```
-4. Environment Variables ekleyin:
+
+Environment Variables:
 ```
 NODE_ENV=production
 PORT=3001
-JWT_SECRET=your-secret-key
-NEWS_API_KEY=your_newsapi_key_here
-CORS_ORIGIN=https://your-frontend-url.netlify.app
-```
-
-#### Railway.app
-
-```bash
-cd api
-railway login
-railway init
-railway up
+CORS_ORIGIN=https://kisahaber.com
+CURRENTS_API_KEY=xxx
+NEWSDATA_API_KEY=xxx
+NEWS_API_KEY=xxx
 ```
 
 ---
 
-## 🔐 Güvenlik Önlemleri
+## 📧 İletişim
 
-### Uygulanmış Güvenlik Katmanları
-
-#### Frontend
-- ✅ Content Security Policy (CSP)
-- ✅ XSS Protection (DOMPurify)
-- ✅ CSRF Token Support
-- ✅ Secure Headers
-- ✅ Input Validation (Zod)
-
-#### Backend
-- ✅ Helmet.js (HTTP headers)
-- ✅ CORS Configuration
-- ✅ Rate Limiting (5 req/sec)
-- ✅ Cookie Parser (secure cookies)
-- ✅ JWT Authentication
-- ✅ Request Logging (Morgan)
-
-### Önerilen Ek Güvenlik Adımları
-
-```bash
-# Production'da environment variables kullanın
-# .env dosyasını ASLA git'e eklemeyin
-# SSL sertifikası kullanın (Netlify otomatik sağlar)
-# API Key'leri güvenli şekilde saklayın
-```
-
----
-
-## 📊 Performance Metrikleri
-
-| Metric | Target | Status |
-|--------|--------|--------|
-| First Contentful Paint | < 1.8s | ✅ |
-| Largest Contentful Paint | < 2.5s | ✅ |
-| Time to Interactive | < 3.5s | ✅ |
-| Cumulative Layout Shift | < 0.1 | ✅ |
-| Mobile Lighthouse Score | > 90 | 🎯 |
-
----
-
-## 🗺️ Roadmap
-
-### Phase 1: Core Platform ✅
-- [x] Mobil-first UI/UX
-- [x] Haber grid sistemi
-- [x] Güvenlik altyapısı
-- [x] REST API temel yapısı
-- [x] **NewsAPI Entegrasyonu** (Türk haber siteleri)
-- [x] **Akıllı Arama Sistemi** (Fuzzy search, Türkçe destek)
-- [x] **Pagination** (Sınırsız haber yükleme)
-- [x] **/trends sayfası** (Gerçek API verisi)
-- [x] **/video sayfası** (Gerçek API verisi)
-- [x] **Breaking News Ticker** (Son dakika haberleri)
-- [x] **SEO Optimizasyonu** (Meta tags, structured data)
-
-### Phase 2: Backend Enhancement (Sırada)
-- [ ] Database entegrasyonu (PostgreSQL/MongoDB)
-- [ ] Admin panel
-- [ ] CMS integration
-- [ ] Image upload & optimization
-- [ ] Kategori bazlı haber çekme
-- [ ] Haber kaydetme/favorilere ekleme
-
-### Phase 3: Advanced Features
-- [ ] User authentication & profiles
-- [ ] Comment system
-- [ ] Push notifications
-- [ ] Real-time updates (WebSocket)
-- [ ] Dark mode
-- [ ] Gelişmiş filtreleme (tarih, kaynak, kategori)
-- [ ] Haber önerileri (AI-powered)
-
-### Phase 4: Expansion
-- [ ] 10 tematik site türetimi
-- [ ] Multi-language support (i18n)
-- [ ] Analytics dashboard
-- [ ] Mobile apps (React Native)
-- [ ] Email newsletters
-- [ ] RSS feeds
-
----
-
-## 🧪 Testing
-
-```bash
-# Frontend tests
-cd web
-npm run test
-
-# Backend tests (yapılacak)
-cd api
-npm run test
-```
-
----
-
-## 📝 Scripts
-
-### Frontend (`/web`)
-```bash
-npm run dev       # Development server (localhost:5173)
-npm run build     # Production build
-npm run preview   # Preview production build
-npm run lint      # ESLint
-```
-
-### Backend (`/api`)
-```bash
-npm run dev       # Development server with nodemon
-npm start         # Production server
-```
-
----
-
-## 🤝 Katkıda Bulunma
-
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'feat: Add amazing feature'`)
-4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
-5. Pull Request açın
-
-### Commit Mesaj Formatı
-```
-feat: Yeni özellik
-fix: Bug düzeltmesi
-docs: Dokümantasyon
-style: Kod formatı
-refactor: Kod iyileştirmesi
-test: Test ekleme
-chore: Build/config değişiklikleri
-```
-
----
-
-## 📧 İletişim & Destek
-
-- **GitHub Issues**: [Sorun bildirin](https://github.com/kullanici-adi/vizyon-nexus/issues)
-- **Email**: info@vizyon-nexus.com
-- **Website**: https://vizyon-nexus.netlify.app
+- **GitHub**: [github.com/muradeyvazli](https://github.com/muradeyvazli)
+- **Website**: https://kisahaber.com
 
 ---
 
 ## 📄 Lisans
 
-© 2025 VİZYON NEXUS. Tüm hakları saklıdır.
+© 2025 Kısa Haber. Tüm hakları saklıdır.
 
 ---
 
-## 🙏 Teşekkürler
-
-- [React Team](https://react.dev/)
-- [Vite](https://vitejs.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Unsplash](https://unsplash.com/) (Demo görseller)
-
----
-
-**Geliştirici Notu**: Bu platform, sektördeki mobil ve güvenlik standartlarını yeniden belirleyen, estetik ve fonksiyonelliği birleştiren bir dijital yatırım projesidir.
+**Made with ❤️ by Murad Eyvazli**
 
 🚀 **Happy Coding!**

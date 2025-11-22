@@ -1,6 +1,6 @@
 /**
  * ========================================
- * VİZYON NEXUS - NEWS API SERVICE
+ * KISA HABER - NEWS API SERVICE
  * ========================================
  * Temiz, basit ve çalışan haber servisi
  * Backend proxy kullanır (CORS sorunu yok)
@@ -32,31 +32,20 @@ export async function fetchNews(options = {}) {
   try {
     const { pageSize = 20, page = 1 } = options;
 
-    console.log(`📡 Backend'den haberler çekiliyor... (Sayfa: ${page})`);
-
     const response = await client.get('/api/news', {
       params: { pageSize, page }
     });
 
-    const { articles, source } = response.data;
+    const { articles } = response.data;
 
     if (articles && articles.length > 0) {
-      if (source === 'newsapi') {
-        console.log('✅ GERÇEK HABERLER:', articles.length, 'adet');
-      } else {
-        console.log('⚠️ Demo haberler:', articles.length, 'adet');
-      }
       return articles;
     }
 
-    // Haber yoksa empty array dön
-    console.warn('⚠️ Backend\'den haber gelmedi');
     return [];
 
   } catch (error) {
-    console.error('❌ Haber çekme hatası:', error.message);
-
-    // Network hatası vs. - Lokal fallback
+    console.error('Haber çekme hatası:', error.message);
     return getLocalFallback();
   }
 }
@@ -79,8 +68,6 @@ export function searchNews(query) {
  * Local fallback - backend'e hiç ulaşılamazsa
  */
 function getLocalFallback() {
-  console.warn('💾 Local fallback kullanılıyor');
-
   return [
     {
       id: 'local-1',

@@ -17,7 +17,6 @@ export default function DailyRecipe() {
 
   const fetch15Recipes = async () => {
     try {
-      console.log('🍳 15 tarif yükleniyor...');
       const recipePromises = [];
 
       // 15 rastgele tarif çek
@@ -47,7 +46,6 @@ export default function DailyRecipe() {
 
       if (fetchedRecipes.length > 0) {
         setRecipes(fetchedRecipes);
-        console.log(`✅ ${fetchedRecipes.length} tarif başarıyla yüklendi!`);
       } else {
         // Fallback - Türk tarifleri
         setRecipes([{
@@ -77,33 +75,16 @@ export default function DailyRecipe() {
   };
 
   const nextRecipe = () => {
-    console.log('🔄 Sonraki tarif');
     setDirection(1);
-    setCurrentIndex((prev) => {
-      const next = (prev + 1) % recipes.length;
-      console.log(`Tarif ${prev + 1} → ${next + 1}`);
-      return next;
-    });
+    setCurrentIndex((prev) => (prev + 1) % recipes.length);
   };
 
   const prevRecipe = () => {
-    console.log('🔄 Önceki tarif');
     setDirection(-1);
-    setCurrentIndex((prev) => {
-      const next = (prev - 1 + recipes.length) % recipes.length;
-      console.log(`Tarif ${prev + 1} → ${next + 1}`);
-      return next;
-    });
+    setCurrentIndex((prev) => (prev - 1 + recipes.length) % recipes.length);
   };
 
   const recipe = recipes[currentIndex];
-
-  console.log('📊 Recipe state:', {
-    recipesLength: recipes.length,
-    currentIndex,
-    hasRecipe: !!recipe,
-    loading
-  });
 
   if (loading) {
     return (

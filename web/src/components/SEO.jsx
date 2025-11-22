@@ -2,28 +2,26 @@
  * ========================================
  * SEO COMPONENT - META TAGS & STRUCTURED DATA
  * ========================================
- * Dependency yok, pure React 19
+ * Kısa Haber - Türkiye'nin En Güncel Haber Portalı
  * Google, Facebook, Twitter, LinkedIn optimize
  */
 
 import { useEffect } from 'react';
 
 export default function SEO({
-  title = 'VİZYON NEXUS - Güncel Haber Portalı',
-  description = 'Türkiye ve dünyadan son dakika haberleri, ekonomi, spor, teknoloji ve daha fazlası. Güvenilir haber kaynağınız.',
-  keywords = 'haber, güncel haberler, son dakika, Türkiye haberleri, dünya haberleri, ekonomi, spor, teknoloji',
+  title = 'Kısa Haber - Türkiye\'nin En Güncel Haber Portalı',
+  description = 'Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberleri. Kısa ve öz haberler için Türkiye\'nin en hızlı haber sitesi.',
+  keywords = 'kısa haber, son dakika, güncel haberler, türkiye haberleri, haber sitesi, ekonomi haberleri, spor haberleri, dünya haberleri, teknoloji haberleri',
   image = '/og-image.jpg',
-  url = typeof window !== 'undefined' ? window.location.href : 'https://vizyon-nexus.netlify.app',
+  url = typeof window !== 'undefined' ? window.location.href : 'https://kisahaber.com',
   type = 'website',
-  author = 'VİZYON NEXUS',
+  author = 'Kısa Haber',
   publishedTime,
   modifiedTime,
 }) {
   useEffect(() => {
-    // Title
     document.title = title;
 
-    // Meta tags
     updateMeta('description', description);
     updateMeta('keywords', keywords);
     updateMeta('author', author);
@@ -34,7 +32,7 @@ export default function SEO({
     updateMeta('og:image', image, 'property');
     updateMeta('og:url', url, 'property');
     updateMeta('og:type', type, 'property');
-    updateMeta('og:site_name', 'VİZYON NEXUS', 'property');
+    updateMeta('og:site_name', 'Kısa Haber', 'property');
     updateMeta('og:locale', 'tr_TR', 'property');
 
     // Twitter Card
@@ -42,8 +40,8 @@ export default function SEO({
     updateMeta('twitter:title', title);
     updateMeta('twitter:description', description);
     updateMeta('twitter:image', image);
-    updateMeta('twitter:site', '@vizyonnexus');
-    updateMeta('twitter:creator', '@vizyonnexus');
+    updateMeta('twitter:site', '@kisahaber');
+    updateMeta('twitter:creator', '@kisahaber');
 
     // Article meta (haber detay sayfaları için)
     if (type === 'article' && publishedTime) {
@@ -53,14 +51,12 @@ export default function SEO({
       updateMeta('article:section', 'Haberler', 'property');
     }
 
-    // Canonical URL
     updateLink('canonical', url);
   }, [title, description, keywords, image, url, type, author, publishedTime, modifiedTime]);
 
-  return null; // Bu component render etmez, sadece head'i günceller
+  return null;
 }
 
-// Helper: Meta tag güncelle
 function updateMeta(name, content, type = 'name') {
   if (!content) return;
 
@@ -75,7 +71,6 @@ function updateMeta(name, content, type = 'name') {
   element.setAttribute('content', content);
 }
 
-// Helper: Link tag güncelle
 function updateLink(rel, href) {
   if (!href) return;
 
@@ -91,7 +86,7 @@ function updateLink(rel, href) {
 }
 
 /**
- * Structured Data Component - JSON-LD
+ * Structured Data Component - JSON-LD for Google Rich Results
  */
 export function StructuredData({ type, data }) {
   useEffect(() => {
@@ -104,52 +99,78 @@ export function StructuredData({ type, data }) {
     if (type === 'organization') {
       structuredData = {
         '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'VİZYON NEXUS',
-        url: 'https://vizyon-nexus.netlify.app',
-        logo: 'https://vizyon-nexus.netlify.app/nexsus-logo.png',
-        description: 'Türkiye\'nin güvenilir haber portalı',
+        '@type': 'NewsMediaOrganization',
+        name: 'Kısa Haber',
+        url: 'https://kisahaber.com',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://kisahaber.com/logo.png',
+          width: 600,
+          height: 60,
+        },
+        description: 'Türkiye\'nin en güncel ve güvenilir haber portalı. Son dakika haberleri, ekonomi, spor, teknoloji ve dünya haberleri.',
+        foundingDate: '2025',
+        sameAs: [
+          'https://twitter.com/kisahaber',
+          'https://facebook.com/kisahaber',
+          'https://instagram.com/kisahaber',
+        ],
         contactPoint: {
           '@type': 'ContactPoint',
           contactType: 'Customer Service',
-          email: 'info@vizyon-nexus.com',
+          email: 'info@kisahaber.com',
+          availableLanguage: 'Turkish',
         },
-        sameAs: [
-          'https://twitter.com/vizyonnexus',
-          'https://facebook.com/vizyonnexus',
-        ],
       };
     } else if (type === 'newsarticle') {
       structuredData = {
         '@context': 'https://schema.org',
         '@type': 'NewsArticle',
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': data.url || 'https://kisahaber.com',
+        },
         headline: data.title,
         description: data.summary,
-        image: data.image,
+        image: {
+          '@type': 'ImageObject',
+          url: data.image,
+          width: 1200,
+          height: 630,
+        },
         datePublished: data.publishedAt,
         dateModified: data.publishedAt,
         author: {
           '@type': 'Person',
-          name: data.author || 'VİZYON NEXUS',
+          name: data.author || 'Kısa Haber',
         },
         publisher: {
-          '@type': 'Organization',
-          name: 'VİZYON NEXUS',
+          '@type': 'NewsMediaOrganization',
+          name: 'Kısa Haber',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://vizyon-nexus.netlify.app/nexsus-logo.png',
+            url: 'https://kisahaber.com/logo.png',
+            width: 600,
+            height: 60,
           },
         },
+        isAccessibleForFree: true,
       };
     } else if (type === 'website') {
       structuredData = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        name: 'VİZYON NEXUS',
-        url: 'https://vizyon-nexus.netlify.app',
+        name: 'Kısa Haber',
+        alternateName: 'Kisa Haber',
+        url: 'https://kisahaber.com',
+        description: 'Türkiye\'nin en güncel haber portalı',
+        inLanguage: 'tr-TR',
         potentialAction: {
           '@type': 'SearchAction',
-          target: 'https://vizyon-nexus.netlify.app/search?q={search_term_string}',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://kisahaber.com/search?q={search_term_string}',
+          },
           'query-input': 'required name=search_term_string',
         },
       };
@@ -157,7 +178,6 @@ export function StructuredData({ type, data }) {
 
     script.textContent = JSON.stringify(structuredData);
 
-    // Eski script'i kaldır
     const oldScript = document.getElementById(script.id);
     if (oldScript) {
       oldScript.remove();

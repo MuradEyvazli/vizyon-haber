@@ -9,9 +9,6 @@ import Trends from './app/routes/Trends'
 import Video from './app/routes/Video'
 import NewsDetail from './app/routes/NewsDetail'
 
-// Debug: Test if React is rendering
-console.log('🚀 React app starting...')
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -26,5 +23,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>,
 )
-
-console.log('✅ React app rendered')

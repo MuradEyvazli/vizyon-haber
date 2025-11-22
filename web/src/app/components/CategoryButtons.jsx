@@ -8,7 +8,7 @@ export default function CategoryButtons() {
   const categories = [
     {
       name: 'Ekonomi',
-      url: 'https://www.bbc.com/turkce/topics/ckdxnw959n7t',
+      url: 'https://www.ntv.com.tr/ekonomi',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -20,47 +20,48 @@ export default function CategoryButtons() {
       description: 'Döviz, Borsa, Finans',
     },
     {
-      name: 'Siyaset',
-      url: 'https://www.bbc.com/turkce/topics/c8nq32jw5zxt',
+      name: 'Spor',
+      url: 'https://www.fanatik.com.tr/',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
       color: 'from-blue-500/20 to-indigo-500/20',
       borderColor: 'border-blue-500/30 hover:border-blue-500/60',
       textColor: 'text-blue-700',
-      description: 'Güncel Siyasi Gelişmeler',
+      description: 'Futbol, Basketbol, Tenis',
     },
     {
-      name: 'Borsa',
-      url: 'https://www.bloomberght.com/',
+      name: 'Teknoloji',
+      url: 'https://shiftdelete.net/',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
       color: 'from-purple-500/20 to-pink-500/20',
       borderColor: 'border-purple-500/30 hover:border-purple-500/60',
       textColor: 'text-purple-700',
-      description: 'BIST, Hisse Senetleri',
+      description: 'Yazılım, Donanım, AI',
     },
     {
-      name: 'Emlak',
-      url: 'https://www.sahibinden.com/',
+      name: 'Dünya',
+      url: 'https://www.trthaber.com/dunya/',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
       color: 'from-orange-500/20 to-red-500/20',
       borderColor: 'border-orange-500/30 hover:border-orange-500/60',
       textColor: 'text-orange-700',
-      description: 'Konut, Arsa, Ticari',
+      description: 'Uluslararası Haberler',
     },
     {
       name: 'Sağlık',
-      url: 'https://www.sabah.com.tr/saglik',
+      url: 'https://www.hurriyet.com.tr/kelebek/saglik/',
       icon: (
         <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />

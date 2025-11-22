@@ -1,14 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import Footer from '../components/Footer';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export default function NewsDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fullContent, setFullContent] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
   const [relatedNews, setRelatedNews] = useState([]);
+
+  // Tam içeriği API'den çek
+  const fetchFullContent = async (url) => {
+    if (!url || url === '#') return;
+
+    try {
+      setContentLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/api/article`, {
+        params: { url },
+        timeout: 20000
+      });
+
+      if (response.data.success && response.data.content) {
+        setFullContent(response.data.content);
+      }
+    } catch (error) {
+      console.error('İçerik çekme hatası:', error.message);
+    } finally {
+      setContentLoading(false);
+    }
+  };
 
   useEffect(() => {
     // localStorage'dan haberi bul
@@ -17,6 +43,11 @@ export default function NewsDetail() {
     if (savedArticle) {
       const data = JSON.parse(savedArticle);
       setArticle(data);
+
+      // Tam içeriği çek (orijinal kaynaktan)
+      if (data.url && data.url !== '#') {
+        fetchFullContent(data.url);
+      }
 
       // İlgili haberleri getir
       const allArticles = JSON.parse(localStorage.getItem('allArticles') || '[]');
@@ -152,85 +183,93 @@ export default function NewsDetail() {
 
             {/* İçerik - Tam Haber */}
             <div className="prose prose-lg prose-slate max-w-none mb-8">
-              {(() => {
-                // Tüm mevcut metinleri birleştir
-                let fullText = '';
-
-                // 1. Summary (genelde en detaylı kısım)
-                if (article.summary) {
-                  fullText += article.summary;
-                }
-
-                // 2. Content varsa ekle (summary'den farklıysa)
-                if (article.content && article.content !== article.summary) {
-                  const cleanContent = article.content
-                    .replace(/\[\+\d+\s*chars?\]/gi, '') // "[+XXXX chars]" kaldır
-                    .replace(/…$/, '') // Sondaki … kaldır
-                    .trim();
-
-                  if (cleanContent && !fullText.includes(cleanContent)) {
-                    fullText += '\n\n' + cleanContent;
-                  }
-                }
-
-                // Temizle ve düzenle
-                fullText = fullText
-                  .replace(/\[\+\d+\s*chars?\]/gi, '')
-                  .replace(/…+/g, '.')
-                  .trim();
-
-                // Paragraflara böl
-                let paragraphs = fullText
-                  .split(/\n\n+/)
-                  .map(p => p.trim())
-                  .filter(p => p.length > 15);
-
-                // Eğer tek paragraf varsa, cümlelere göre böl
-                if (paragraphs.length === 1 && paragraphs[0].length > 300) {
-                  const sentences = paragraphs[0].match(/[^.!?]+[.!?]+/g) || [paragraphs[0]];
-                  paragraphs = [];
-                  let currentPara = '';
-
-                  sentences.forEach((sentence, idx) => {
-                    currentPara += sentence.trim() + ' ';
-                    // Her 2-3 cümlede bir paragraf oluştur
-                    if ((idx + 1) % 2 === 0 || idx === sentences.length - 1) {
-                      paragraphs.push(currentPara.trim());
-                      currentPara = '';
-                    }
-                  });
-                }
-
-                // En az 1 paragraf olsun
-                if (paragraphs.length === 0) {
-                  paragraphs = [fullText];
-                }
-
-                return (
-                  <>
-                    {paragraphs.map((paragraph, idx) => (
-                      <p
-                        key={idx}
-                        className={`text-slate-700 leading-relaxed mb-6 ${
-                          idx === 0 ? 'text-xl font-medium text-slate-900' : 'text-lg'
-                        }`}
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
-
-                    {/* Haber analiz/sonuç bölümü ekle */}
-                    {paragraphs.length > 0 && (
-                      <div className="mt-8 p-6 bg-slate-50 rounded-2xl border-l-4 border-blue-600">
-                        <p className="text-slate-700 text-base leading-relaxed">
-                          <strong className="text-slate-900">📌 Özet:</strong> Bu gelişme, {article.category?.toLowerCase()} alanında önemli bir adım olarak değerlendiriliyor.
-                          Konuyla ilgili uzmanlar, durumu yakından takip etmeye devam ediyor.
+              {contentLoading ? (
+                // Yükleniyor animasyonu
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                    <p className="text-slate-600 font-medium">Haberin tam içeriği yükleniyor...</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Tam içerik varsa göster */}
+                  {fullContent ? (
+                    <>
+                      {fullContent.split('\n\n').map((paragraph, idx) => (
+                        <p
+                          key={idx}
+                          className={`text-slate-700 leading-relaxed mb-6 ${
+                            idx === 0 ? 'text-xl font-medium text-slate-900' : 'text-lg'
+                          }`}
+                        >
+                          {paragraph}
                         </p>
+                      ))}
+                    </>
+                  ) : (
+                    // Fallback - API içeriği
+                    <>
+                      {(() => {
+                        let fallbackText = article.summary || '';
+
+                        if (article.content && article.content !== article.summary) {
+                          const cleanContent = article.content
+                            .replace(/\[\+\d+\s*chars?\]/gi, '')
+                            .replace(/…$/, '')
+                            .trim();
+                          if (cleanContent) {
+                            fallbackText += '\n\n' + cleanContent;
+                          }
+                        }
+
+                        const paragraphs = fallbackText
+                          .split(/\n\n+/)
+                          .map(p => p.trim())
+                          .filter(p => p.length > 15);
+
+                        return paragraphs.map((paragraph, idx) => (
+                          <p
+                            key={idx}
+                            className={`text-slate-700 leading-relaxed mb-6 ${
+                              idx === 0 ? 'text-xl font-medium text-slate-900' : 'text-lg'
+                            }`}
+                          >
+                            {paragraph}
+                          </p>
+                        ));
+                      })()}
+                    </>
+                  )}
+
+                  {/* Kaynak linki - Tam haberi oku butonu */}
+                  {article.url && article.url !== '#' && (
+                    <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                          <p className="text-slate-700 font-medium">
+                            Haberin devamını kaynak sitede okuyabilirsiniz.
+                          </p>
+                          <p className="text-sm text-slate-500 mt-1">
+                            Kaynak: {article.source || 'Orijinal Kaynak'}
+                          </p>
+                        </div>
+                        <a
+                          href={article.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+                        >
+                          <span>Kaynağa Git</span>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
                       </div>
-                    )}
-                  </>
-                );
-              })()}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Kaynak Bilgisi - Link olarak değil, sadece bilgi */}

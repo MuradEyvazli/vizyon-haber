@@ -11,8 +11,8 @@ export default function Footer() {
           <div className="md:col-span-2">
             <div className="mb-6">
               <img
-                src="/nexsus-logo-black.png"
-                alt="Vizyon Nexsus News"
+                src="/kisa-haber-black-removebg-preview.png"
+                alt="Kısa Haber - Türkiye'nin En Güncel Haber Portalı"
                 className="h-[200px] md:h-[200px] md:mb-[-50px] md:mt-[-50px] mb-[-50px] mt-[-50px] w-auto"
               />
             </div>
@@ -67,7 +67,7 @@ export default function Footer() {
         <div className="border-t border-slate-700 pt-8 mt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-slate-400 text-sm">
-              © {currentYear} VİZYON NEXUS. Tüm hakları saklıdır.
+              © {currentYear} Kısa Haber. Tüm hakları saklıdır.
             </div>
 
             {/* Made by */}

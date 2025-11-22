@@ -34,16 +34,11 @@ export default function LiveWidgets() {
   // Fetch user location and weather on mount
   useEffect(() => {
     const fetchWeather = async () => {
-      console.log('🚀 LiveWidgets: Hava durumu yükleniyor...');
       try {
-        // Get user's location
         const coords = await getUserLocation();
         setLocation(coords);
-        console.log('✅ LiveWidgets: Konum alındı:', coords);
 
-        // Fetch weather for location
         const weatherData = await getWeatherByCoords(coords.lat, coords.lon);
-        console.log('✅ LiveWidgets: Hava durumu verileri:', weatherData);
 
         setWeather({
           temp: weatherData.temp,
@@ -55,10 +50,8 @@ export default function LiveWidgets() {
           feelsLike: weatherData.feelsLike,
           loading: false,
         });
-
-        console.log('✅ LiveWidgets: Hava durumu widgeti güncellendi!');
       } catch (error) {
-        console.error('❌ LiveWidgets: Hava durumu hatası:', error);
+        console.error('Hava durumu hatası:', error);
         setWeather((prev) => ({ ...prev, loading: false }));
       }
     };
@@ -69,19 +62,16 @@ export default function LiveWidgets() {
   // Fetch exchange rates on mount
   useEffect(() => {
     const fetchRates = async () => {
-      console.log('💱 Döviz kurları yükleniyor...');
       try {
         const rates = await getExchangeRates();
         setExchangeRates({ ...rates, loading: false });
-        console.log('✅ Döviz kurları güncellendi:', rates);
       } catch (error) {
-        console.error('❌ Döviz kurları hatası:', error);
+        console.error('Döviz kurları hatası:', error);
         setExchangeRates((prev) => ({ ...prev, loading: false }));
       }
     };
 
     fetchRates();
-    // Her 5 dakikada bir güncelle
     const interval = setInterval(fetchRates, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);

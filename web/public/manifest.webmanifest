@@ -1,7 +1,7 @@
 {
-  "name": "VİZYON NEXUS - Yeni Nesil Haber Platformu",
-  "short_name": "NEXUS",
-  "description": "Mobil öncelikli, güvenli, hızlı haber platformu",
+  "name": "Kısa Haber - Türkiye'nin En Güncel Haber Portalı",
+  "short_name": "Kısa Haber",
+  "description": "Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberleri.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

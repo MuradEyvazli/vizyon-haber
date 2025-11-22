@@ -48,7 +48,6 @@ export default function Home() {
         localStorage.setItem(`article-${article.slug}`, JSON.stringify(article));
       });
 
-      console.log('✅ Haberler yüklendi:', news.length);
     } catch (error) {
       console.error('Haber yükleme hatası:', error);
     } finally {
@@ -82,10 +81,8 @@ export default function Home() {
           localStorage.setItem(`article-${article.slug}`, JSON.stringify(article));
         });
 
-        console.log(`✅ Sayfa ${nextPage} yüklendi:`, moreNews.length, 'yeni haber');
       } else {
         setHasMore(false);
-        console.log('❌ Daha fazla haber yok');
       }
     } catch (error) {
       console.error('Daha fazla haber yüklenemedi:', error);
@@ -110,10 +107,10 @@ export default function Home() {
     <main className="min-h-screen">
       {/* SEO Meta Tags */}
       <SEO
-        title="VİZYON HABER - Türkiye'nin Güvenilir Haber Portalı"
-        description="Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberlerini takip edin. Türkiye'nin en güvenilir haber kaynağı."
-        keywords="haber, son dakika, güncel haberler, Türkiye haberleri, dünya haberleri, ekonomi haberleri, spor haberleri, teknoloji"
-        image="/nexsus-logo.png"
+        title="Kısa Haber - Türkiye'nin En Güncel Haber Portalı | Son Dakika"
+        description="Son dakika haberleri, güncel gelişmeler, ekonomi, spor, teknoloji ve dünya haberleri. Kısa ve öz haberler için Türkiye'nin en hızlı haber sitesi. 7/24 güncel haberler."
+        keywords="kısa haber, son dakika, güncel haberler, türkiye haberleri, haber sitesi, son dakika haberleri, ekonomi haberleri, spor haberleri, dünya haberleri, teknoloji haberleri"
+        image="/og-image.jpg"
       />
 
       {/* Structured Data - Organization */}

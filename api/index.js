@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import axios from 'axios';
 import NodeCache from 'node-cache';
+import * as cheerio from 'cheerio';
 
 // ========================================
 // ENVIRONMENT VARIABLES
@@ -60,7 +61,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
   CORS_ORIGIN,
-  'https://vizyon-nexus.com',
+  'https://kisahaber.com',
 ].filter(Boolean);
 
 app.use(cors({
@@ -145,7 +146,7 @@ async function fetchFromCurrents(pageSize, page) {
       page_size: pageSize,
       page_number: page,
     },
-    timeout: 10000,
+    timeout: 5000,
   });
 
   if (response.data.status === 'ok' && response.data.news) {
@@ -181,9 +182,8 @@ async function fetchFromNewsData(pageSize, page) {
       country: 'tr',
       language: 'tr',
       size: pageSize,
-      // NewsData.io doesn't support page param - uses nextPage token instead
     },
-    timeout: 10000,
+    timeout: 5000,
   });
 
   if (response.data.status === 'success' && response.data.results) {
@@ -221,7 +221,7 @@ async function fetchFromNewsAPI(pageSize, page) {
       pageSize: pageSize,
       page: page,
     },
-    timeout: 10000,
+    timeout: 5000,
   });
 
   if (response.data.status === 'ok' && response.data.articles) {
@@ -308,10 +308,10 @@ async function fetchNewsHybrid(pageSize, page) {
   // Cache key
   const cacheKey = `news-${pageSize}-${page}`;
 
-  // 1. Önce cache'den kontrol et
+  // 1. Önce cache'den kontrol et - ANINDA DÖNÜŞ
   const cachedNews = cache.get(cacheKey);
   if (cachedNews) {
-    console.log('✅ Cache\'den haber döndürüldü');
+    console.log('⚡ Cache\'den ANINDA döndürüldü!');
     return {
       articles: cachedNews,
       source: 'cache',
@@ -319,64 +319,71 @@ async function fetchNewsHybrid(pageSize, page) {
     };
   }
 
-  // 2. TÜM API'leri PARALEL çağır - maksimum haber için!
-  console.log('🚀 3 API paralel çağrılıyor... (Maksimum haber modu)');
+  console.log('🚀 API\'ler çağrılıyor... (Hızlı mod - ilk gelen kazanır)');
 
-  const apiCalls = [
-    fetchFromCurrents(pageSize, page).catch(err => {
-      console.error('❌ Currents API HATA:', err.message);
-      return [];
-    }),
-    fetchFromNewsData(pageSize, page).catch(err => {
-      console.error('❌ NewsData API HATA:', err.message);
-      return [];
-    }),
-    fetchFromNewsAPI(pageSize, page).catch(err => {
-      console.error('❌ NewsAPI HATA:', err.message);
-      return [];
-    })
+  // 2. HIZLI MOD: İlk başarılı API'den dönen sonucu kullan
+  // Her API kendi timeout'u ile çalışır, biri gelince devam et
+  let allArticles = [];
+  const apiResults = { currents: 0, newsdata: 0, newsapi: 0 };
+
+  // Timeout wrapper - 5 saniye max
+  const withTimeout = (promise, ms, name) => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`${name} timeout`)), ms)
+      )
+    ]);
+  };
+
+  // API çağrılarını başlat
+  const apiPromises = [
+    withTimeout(fetchFromCurrents(pageSize, page), 5000, 'Currents')
+      .then(data => { apiResults.currents = data.length; return data; })
+      .catch(() => []),
+    withTimeout(fetchFromNewsData(pageSize, page), 5000, 'NewsData')
+      .then(data => { apiResults.newsdata = data.length; return data; })
+      .catch(() => []),
+    withTimeout(fetchFromNewsAPI(pageSize, page), 5000, 'NewsAPI')
+      .then(data => { apiResults.newsapi = data.length; return data; })
+      .catch(() => [])
   ];
 
-  const results = await Promise.all(apiCalls);
+  // Tüm API'leri paralel çağır ama MAX 6 saniye bekle
+  try {
+    const results = await Promise.race([
+      Promise.all(apiPromises),
+      new Promise((resolve) => setTimeout(() => resolve([[], [], []]), 6000))
+    ]);
 
-  // 3. Tüm sonuçları birleştir
-  const allArticles = results.flat().filter(article => article);
+    allArticles = results.flat().filter(article => article);
+  } catch (error) {
+    console.error('❌ API hatası:', error.message);
+  }
 
-  console.log(`📊 API Sonuçları:`);
-  console.log(`   Currents: ${results[0].length} haber`);
-  console.log(`   NewsData: ${results[1].length} haber`);
-  console.log(`   NewsAPI: ${results[2].length} haber`);
-  console.log(`   TOPLAM: ${allArticles.length} gerçek haber! 🎉`);
+  console.log(`📊 Sonuç: Currents:${apiResults.currents} NewsData:${apiResults.newsdata} NewsAPI:${apiResults.newsapi} = ${allArticles.length} haber`);
 
-  // 4. Hiç haber yoksa demo data
+  // 3. Hiç haber yoksa demo data
   if (allArticles.length === 0) {
-    console.warn('⚠️ Hiçbir API\'den haber alınamadı - Demo data kullanılıyor');
+    console.warn('⚠️ Demo data kullanılıyor');
     return {
       articles: getDemoNews(pageSize),
       source: 'demo',
-      cached: false,
-      error: 'Tüm API\'ler başarısız'
+      cached: false
     };
   }
 
-  // 5. Haberleri karıştır - 3 API'den gelen haberler karışık gösterilsin
+  // 4. Karıştır ve cache'e kaydet (2 saat)
   const shuffled = shuffleArray(allArticles);
+  cache.set(cacheKey, shuffled, 7200); // 2 saat cache
 
-  // 6. Cache'e kaydet
-  cache.set(cacheKey, shuffled);
-
-  console.log(`✅ ${shuffled.length} haber karıştırılıp cache'e kaydedildi`);
+  console.log(`✅ ${shuffled.length} haber hazır!`);
 
   return {
     articles: shuffled,
-    source: 'Hybrid (3 API Paralel)',
+    source: 'Hybrid',
     cached: false,
-    stats: {
-      currents: results[0].length,
-      newsdata: results[1].length,
-      newsapi: results[2].length,
-      total: allArticles.length
-    }
+    stats: apiResults
   };
 }
 
@@ -447,6 +454,132 @@ app.get('/api/stats', (req, res) => {
 });
 
 // ========================================
+// ARTICLE SCRAPER ENDPOINT - Tam İçerik Çekme
+// ========================================
+app.get('/api/article', async (req, res) => {
+  try {
+    const { url } = req.query;
+
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'URL gerekli' });
+    }
+
+    // Cache kontrolü
+    const cacheKey = `article-${Buffer.from(url).toString('base64').substring(0, 50)}`;
+    const cachedContent = cache.get(cacheKey);
+    if (cachedContent) {
+      return res.json({ success: true, content: cachedContent, cached: true });
+    }
+
+    console.log(`📄 Makale çekiliyor: ${url}`);
+
+    // Sayfayı çek
+    const response = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+      }
+    });
+
+    const $ = cheerio.load(response.data);
+
+    // Gereksiz elementleri kaldır
+    $('script, style, nav, header, footer, aside, .ad, .advertisement, .social-share, .comments, .related-news, iframe, .sidebar').remove();
+
+    // Farklı haber sitelerinin içerik selector'ları
+    const contentSelectors = [
+      // Türk haber siteleri
+      '.news-content',
+      '.article-content',
+      '.news-detail-content',
+      '.detail-content',
+      '.content-text',
+      '.haber-detay',
+      '.haber-icerik',
+      '.news-body',
+      '.article-body',
+      '.story-body',
+      '.entry-content',
+      '.post-content',
+      // Genel selector'lar
+      '[itemprop="articleBody"]',
+      '[class*="article-content"]',
+      '[class*="news-content"]',
+      '[class*="story-content"]',
+      'article p',
+      '.content p',
+      'main p',
+    ];
+
+    let fullContent = '';
+    let paragraphs = [];
+
+    // Selector'ları dene
+    for (const selector of contentSelectors) {
+      const elements = $(selector);
+      if (elements.length > 0) {
+        elements.find('p').each((_, el) => {
+          const text = $(el).text().trim();
+          if (text.length > 30 && !text.includes('©') && !text.includes('Tüm hakları')) {
+            paragraphs.push(text);
+          }
+        });
+
+        if (paragraphs.length >= 3) {
+          break;
+        }
+      }
+    }
+
+    // Eğer hala içerik bulunamadıysa, tüm p etiketlerini dene
+    if (paragraphs.length < 3) {
+      $('p').each((_, el) => {
+        const text = $(el).text().trim();
+        if (text.length > 50 && !text.includes('©') && !text.includes('cookie') && !text.includes('reklam')) {
+          paragraphs.push(text);
+        }
+      });
+    }
+
+    // Tekrar eden paragrafları kaldır
+    paragraphs = [...new Set(paragraphs)];
+
+    // İlk 15 paragrafı al (çok uzun olmasın)
+    fullContent = paragraphs.slice(0, 15).join('\n\n');
+
+    if (fullContent.length < 100) {
+      return res.json({
+        success: false,
+        error: 'İçerik çekilemedi',
+        content: null
+      });
+    }
+
+    // Cache'e kaydet (6 saat)
+    cache.set(cacheKey, fullContent, 21600);
+
+    console.log(`✅ Makale çekildi: ${paragraphs.length} paragraf, ${fullContent.length} karakter`);
+
+    return res.json({
+      success: true,
+      content: fullContent,
+      paragraphCount: paragraphs.length,
+      cached: false
+    });
+
+  } catch (error) {
+    console.error('❌ Makale çekme hatası:', error.message);
+    return res.json({
+      success: false,
+      error: error.message,
+      content: null
+    });
+  }
+});
+
+// ========================================
 // HEALTH & ROOT ENDPOINTS
 // ========================================
 app.get('/health', (req, res) => {
@@ -469,7 +602,7 @@ app.get('/health', (req, res) => {
 
 app.get('/', (req, res) => {
   res.json({
-    message: 'VİZYON NEXUS API v3.0 - Hibrit Sistem',
+    message: 'Kısa Haber API v3.0 - Hibrit Sistem',
     features: [
       '✅ Çoklu API Desteği (Currents + NewsData + NewsAPI)',
       '✅ Akıllı Cache (1 saat TTL)',
@@ -491,7 +624,7 @@ app.get('/', (req, res) => {
 // ========================================
 app.listen(PORT, '0.0.0.0', () => {
   console.log('');
-  console.log('🚀 VİZYON NEXUS API v3.0 - HİBRİT SİSTEM');
+  console.log('🚀 Kısa Haber API v3.0 - HİBRİT SİSTEM');
   console.log('==========================================');
   console.log(`📍 Port: ${PORT}`);
   console.log(`🌍 Environment: ${NODE_ENV}`);

@@ -1,14 +1,31 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getExchangeRates } from '../../services/exchangeRate';
 
 export default function TopBar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [exchangeRates, setExchangeRates] = useState({ USD: '--', EUR: '--', GBP: '--' });
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Döviz kurlarını çek
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const rates = await getExchangeRates();
+        setExchangeRates(rates);
+      } catch (error) {
+        console.error('Döviz kurları hatası:', error);
+      }
+    };
+    fetchRates();
+    const interval = setInterval(fetchRates, 5 * 60 * 1000); // 5 dakikada bir güncelle
+    return () => clearInterval(interval);
+  }, []);
 
   const menuItems = [
     { href: '/', label: 'Ana Sayfa' },
@@ -154,6 +171,34 @@ export default function TopBar() {
         </div>
       </div>
 
+      {/* Döviz Kurları Mini Ticker */}
+      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600">
+        <div className="container">
+          <div className="flex items-center justify-center gap-6 py-2">
+            <div className="flex items-center gap-2 text-white text-xs font-semibold">
+              <span className="opacity-70">DÖVİZ:</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-white">
+              <span className="text-xs opacity-70">$</span>
+              <span className="text-sm font-bold">USD</span>
+              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.USD}</span>
+            </div>
+            <div className="w-px h-4 bg-white/30" />
+            <div className="flex items-center gap-1.5 text-white">
+              <span className="text-xs opacity-70">€</span>
+              <span className="text-sm font-bold">EUR</span>
+              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.EUR}</span>
+            </div>
+            <div className="w-px h-4 bg-white/30" />
+            <div className="flex items-center gap-1.5 text-white">
+              <span className="text-xs opacity-70">£</span>
+              <span className="text-sm font-bold">GBP</span>
+              <span className="text-sm font-black text-yellow-300">₺{exchangeRates.GBP}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Ana Header */}
       <div className="container">
         <div className="flex items-center justify-between py-5 md:py-6">
@@ -165,8 +210,8 @@ export default function TopBar() {
               className="flex items-center cursor-pointer"
             >
               <img
-                src="/nexsus-logo.png"
-                alt="Vizyon Nexsus News"
+                src="/kisa-haber-white-removebg-preview.png"
+                alt="Kısa Haber - Türkiye'nin En Güncel Haber Portalı"
                 className="h-[200px] mb-[-50px] mt-[-50px] md:mb-[-50px] md:mt-[-50px] md:h-[200px] w-auto"
               />
             </motion.div>

@@ -1,5 +1,5 @@
-# Robots.txt - VİZYON NEXUS
-# https://vizyon-nexus.netlify.app/robots.txt
+# Robots.txt - Kısa Haber
+# https://kisahaber.com/robots.txt
 
 # Allow all search engines
 User-agent: *
@@ -19,7 +19,7 @@ Disallow: /api/
 Disallow: /*.json$
 
 # Sitemap location
-Sitemap: https://vizyon-nexus.netlify.app/sitemap.xml
+Sitemap: https://kisahaber.com/sitemap.xml
 
 # Crawl delay (optional, in seconds)
 Crawl-delay: 1

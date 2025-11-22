@@ -61,24 +61,35 @@ app.use(helmet());
 app.use(express.json({ limit: '200kb' }));
 app.use(cookieParser());
 
-// CORS
+// CORS - Sadece izin verilen siteler erişebilir
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3001',
-  CORS_ORIGIN,
+  // Production
+  'https://kisahaber.netlify.app',
   'https://kisahaber.com',
-].filter(Boolean);
+  'https://www.kisahaber.com',
+  // Development
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('https://', '').replace('http://', '')))) {
+    // Server-to-server istekleri (origin yok) - izin ver (health check vs.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // İzin verilen origin mi kontrol et
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true);
+      console.log(`🚫 CORS engellendi: ${origin}`);
+      callback(new Error('CORS izni yok - Bu site API\'ye erişemez'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
